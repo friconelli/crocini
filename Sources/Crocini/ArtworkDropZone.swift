@@ -21,7 +21,6 @@ struct ArtworkDropZone: View {
     @State private var hovering = false
     @State private var bounce = false
     @State private var dashPhase: CGFloat = 0
-    @State private var spin = 0.0
 
     var body: some View {
         Group {
@@ -72,9 +71,9 @@ struct ArtworkDropZone: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    // bordo in quadricromia: ciano, magenta e giallo che girano lentamente
-                    .strokeBorder(AngularGradient(colors: [Theme.cyan, Theme.magenta, Theme.yellow, Theme.cyan],
-                                                  center: .center, angle: .degrees(spin)),
+                    // bordo in quadricromia: ciano, magenta e giallo (fisso: un gradiente che gira consuma CPU di continuo)
+                    .strokeBorder(LinearGradient(colors: [Theme.cyan, Theme.magenta, Theme.yellow],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing),
                                   style: StrokeStyle(lineWidth: isTargeted ? 3 : 2,
                                                      dash: isTargeted ? [] : [7, 5], dashPhase: dashPhase))
                     .opacity(active ? 1 : 0.8)
@@ -85,10 +84,13 @@ struct ArtworkDropZone: View {
         .onHover { hovering = $0 }
         .animation(Theme.spring, value: isTargeted)
         .animation(.easeOut(duration: 0.15), value: hovering)
+        // il tratteggio scorre solo quando serve (hover o trascinamento), così a riposo l'app non ridisegna di continuo
+        .onChange(of: active) { on in
+            if on { withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) { dashPhase = -24 } }
+            else { withAnimation(.easeOut(duration: 0.2)) { dashPhase = 0 } }
+        }
         .onAppear {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { bounce = true }
-            withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) { dashPhase = -24 }
-            withAnimation(.linear(duration: 7).repeatForever(autoreverses: false)) { spin = 360 }
         }
     }
 

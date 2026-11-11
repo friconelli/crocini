@@ -18,6 +18,11 @@ final class Updater: ObservableObject {
     }
 
     @Published private(set) var state: State = .idle
+    /// Avanzamento del download (0...1) e fase corrente durante l'installazione.
+    @Published private(set) var progress: Double = 0
+    @Published private(set) var phase: Phase = .downloading
+
+    enum Phase { case downloading, extracting, verifying, restarting }
     /// Mostra la finestra dell'aggiornamento (aperta da menu o all'avvio se c'è una novità).
     @Published var showSheet = false
 
@@ -80,6 +85,8 @@ final class Updater: ObservableObject {
     func install() async {
         guard case let .available(_, _, downloadURL, _) = state else { return }
         state = .installing
+        progress = 0
+        phase = .downloading
         do {
             let fm = FileManager.default
             let target = Bundle.main.bundleURL
@@ -91,11 +98,13 @@ final class Updater: ObservableObject {
             let workDir = fm.temporaryDirectory.appendingPathComponent("CrociniUpdate-\(UUID().uuidString)")
             try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
 
-            let (tmpFile, response) = try await URLSession.shared.download(from: downloadURL)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError.network }
             let zip = workDir.appendingPathComponent(Self.assetName)
-            try fm.moveItem(at: tmpFile, to: zip)
+            try await Self.download(downloadURL, to: zip) { [weak self] fraction in
+                Task { @MainActor in self?.progress = fraction }
+            }
+            progress = 1
 
+            phase = .extracting
             let extracted = workDir.appendingPathComponent("extracted")
             try fm.createDirectory(at: extracted, withIntermediateDirectories: true)
             try Self.run("/usr/bin/ditto", ["-x", "-k", zip.path, extracted.path])
@@ -103,11 +112,19 @@ final class Updater: ObservableObject {
             let newApp = extracted.appendingPathComponent("Crocini.app")
             guard fm.fileExists(atPath: newApp.path) else { throw UpdateError.badArchive }
             // Verifica che il bundle sia integro prima di sostituire quello in uso.
+            phase = .verifying
             try Self.run("/usr/bin/codesign", ["--verify", "--deep", newApp.path])
 
+            phase = .restarting
             // Script distaccato: attende la chiusura dell'app, sostituisce il bundle e riapre.
             let script = """
-            while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.2; done
+            PID=\(ProcessInfo.processInfo.processIdentifier)
+            i=0
+            while kill -0 $PID 2>/dev/null; do
+              i=$((i+1))
+              [ $i -gt 25 ] && kill -9 $PID 2>/dev/null   # se l'app non si chiude entro ~5 secondi, la chiudo io
+              sleep 0.2
+            done
             rm -rf "$TARGET"
             ditto "$NEW" "$TARGET"
             xattr -dr com.apple.quarantine "$TARGET" 2>/dev/null
@@ -129,6 +146,17 @@ final class Updater: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    /// Scarica un file notificando l'avanzamento (0...1).
+    private static func download(_ url: URL, to dest: URL, progress: @escaping @Sendable (Double) -> Void) async throws {
+        let delegate = DownloadDelegate(dest: dest, progress: progress)
+        let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+        defer { session.finishTasksAndInvalidate() }
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            delegate.continuation = c
+            session.downloadTask(with: url).resume()
+        }
+    }
 
     static func isNewer(_ a: String, than b: String) -> Bool {
         let pa = a.split(separator: ".").map { Int($0) ?? 0 }
@@ -202,7 +230,20 @@ struct UpdateSheet: View {
                         .keyboardShortcut(.defaultAction)
                 }
             case .installing:
-                HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Download e installazione…") }
+                VStack(alignment: .leading, spacing: 8) {
+                    if updater.phase == .downloading {
+                        ProgressView(value: updater.progress)
+                        Text("Download in corso… \(Int(updater.progress * 100))%")
+                    } else {
+                        ProgressView()
+                        switch updater.phase {
+                        case .extracting: Text("Estrazione…")
+                        case .verifying: Text("Verifica dell'app…")
+                        default: Text("Riavvio di Crocini…")
+                        }
+                    }
+                }
+                .foregroundStyle(.secondary)
             case .failed(let message):
                 Label(message, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                 Button("Riprova") { Task { await updater.check() } }
@@ -214,5 +255,37 @@ struct UpdateSheet: View {
         .padding(22)
         .frame(width: 440)
         .tint(Theme.magenta)
+    }
+}
+
+
+private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    let dest: URL
+    let progress: @Sendable (Double) -> Void
+    var continuation: CheckedContinuation<Void, Error>?
+    private var moveError: Error?
+
+    init(dest: URL, progress: @escaping @Sendable (Double) -> Void) {
+        self.dest = dest
+        self.progress = progress
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
+                    totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        guard totalBytesExpectedToWrite > 0 else { return }
+        progress(min(1, Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)))
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        if (downloadTask.response as? HTTPURLResponse)?.statusCode != 200 {
+            moveError = Updater.UpdateError.network
+            return
+        }
+        do { try FileManager.default.moveItem(at: location, to: dest) } catch { moveError = error }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error ?? moveError { continuation?.resume(throwing: error) } else { continuation?.resume() }
+        continuation = nil
     }
 }

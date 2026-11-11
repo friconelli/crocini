@@ -111,3 +111,7 @@
 "Nome del preset" = "Preset name";
 "Annulla" = "Cancel";
 "Salva" = "Save";
+"Download in corso… %lld%%" = "Downloading… %lld%%";
+"Estrazione…" = "Extracting…";
+"Verifica dell'app…" = "Verifying the app…";
+"Riavvio di Crocini…" = "Restarting Crocini…";
