@@ -15,7 +15,10 @@ struct CrociniApp: App {
                 .environmentObject(viewport)
                 .environmentObject(updater)
                 .frame(minWidth: 900, minHeight: 640)
-                .onAppear(perform: Snapshot.scheduleIfRequested)
+                .onAppear {
+                    Snapshot.scheduleIfRequested()
+                    Snapshot.prepareIfRequested()
+                }
         }
         .defaultSize(width: 1140, height: 780)
         .windowStyle(.hiddenTitleBar)
