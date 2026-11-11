@@ -189,6 +189,7 @@ struct DropOverlay: View {
 /// Fronte-retro: interruttore e grafica del retro. Il PDF avrà due pagine, la seconda specchiata.
 struct BackSideCard: View {
     @EnvironmentObject var store: Store
+    @State private var showAlign = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -223,23 +224,39 @@ struct BackSideCard: View {
                         .buttonStyle(ChipButtonStyle(plate: .magenta))
                 }
                 if store.backArtwork != nil {
-                    DisclosureGroup("Correggi l'allineamento del retro") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            MMField("Destra (−sinistra)", value: $store.backOffsetX)
-                            MMField("Basso (−alto)", value: $store.backOffsetY)
-                            if store.backOffsetX != 0 || store.backOffsetY != 0 {
-                                Button { store.backOffsetX = 0; store.backOffsetY = 0 } label: {
-                                    Label("Azzera", systemImage: "arrow.counterclockwise")
-                                }
-                                .buttonStyle(ChipButtonStyle(plate: .yellow))
+                    VStack(alignment: .leading, spacing: 0) {
+                        // tutta la riga è cliccabile, non solo la freccia
+                        Button { withAnimation(Theme.spring) { showAlign.toggle() } } label: {
+                            HStack {
+                                Text("Correggi l'allineamento del retro")
+                                    .font(Theme.font(.callout, .semibold))
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(Theme.font(size: 11, .bold))
+                                    .foregroundStyle(.secondary)
+                                    .rotationEffect(.degrees(showAlign ? 90 : 0))
                             }
-                            Text("Sposta tutto il blocco del retro, segni compresi. Guarda il retro nell'anteprima per vedere il risultato.")
-                                .font(Theme.font(.caption)).foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.top, 6)
+                        .buttonStyle(.plain)
+                        if showAlign {
+                            VStack(alignment: .leading, spacing: 8) {
+                                MMField("Destra (−sinistra)", value: $store.backOffsetX)
+                                MMField("Basso (−alto)", value: $store.backOffsetY)
+                                if store.backOffsetX != 0 || store.backOffsetY != 0 {
+                                    Button { store.backOffsetX = 0; store.backOffsetY = 0 } label: {
+                                        Label("Azzera", systemImage: "arrow.counterclockwise")
+                                    }
+                                    .buttonStyle(ChipButtonStyle(plate: .yellow))
+                                }
+                                Text("Sposta tutto il blocco del retro, segni compresi. Guarda il retro nell'anteprima per vedere il risultato.")
+                                    .font(Theme.font(.caption)).foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(.top, 8)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
-                    .font(Theme.font(.callout, .semibold))
                 }
                 Text("Il PDF ha due pagine: stampalo fronte-retro girando sul lato lungo. Il retro è già specchiato.")
                     .font(Theme.font(.caption)).foregroundStyle(.secondary)

@@ -24,6 +24,10 @@ final class Store: ObservableObject {
 
     /// Plotter di taglio: nel PDF di stampa i segni di registrazione, più un secondo PDF con la linea di taglio.
     @Published var plotter = false
+    /// Forma di taglio personalizzata (SVG) al posto del rettangolo, per la fustella del plotter.
+    @Published var cutShape: CutShape?
+    /// Numero progressivo da stampare su ogni elemento.
+    @Published var numbering = Numbering()
     @Published var plotterRadius = 0.0
 
     @Published var userPresets: [LayoutPreset] = []
@@ -164,6 +168,28 @@ final class Store: ObservableObject {
         return true
     }
 
+    func chooseCutShape() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.svg]
+        panel.allowsMultipleSelection = false
+        panel.message = L("Scegli la forma di taglio (SVG)")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let shape = CutShape.load(url: url) else {
+            message = L("Non trovo nessun tracciato in «%@». Serve un SVG con forme vettoriali (tracciati, rettangoli, cerchi, poligoni).", url.lastPathComponent)
+            return
+        }
+        withAnimation(Theme.spring) { cutShape = shape }
+    }
+
+    func clearCutShape() { withAnimation(Theme.spring) { cutShape = nil } }
+
+    /// Imposta l'elemento sulla misura della forma.
+    func fitItemToShape() {
+        guard let s = cutShape else { return }
+        settings.itemWidth = max(1, s.widthMM.rounded(toPlaces: 1))
+        settings.itemHeight = max(1, s.heightMM.rounded(toPlaces: 1))
+    }
+
     func clearBackArtwork() {
         withAnimation(Theme.spring) { backArtwork = nil; backArtworkName = nil; previewBack = false }
     }
@@ -192,7 +218,8 @@ final class Store: ObservableObject {
         panel.nameFieldStringValue = "Crocini \(fmt(settings.itemWidth))x\(fmt(settings.itemHeight))\(duplex ? " fronte-retro" : "").pdf"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if !PDFExporter.export(settings: settings, result: r, artwork: artwork,
-                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, backOffset: (backOffsetX, backOffsetY), registration: plotter, to: url) {
+                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, backOffset: (backOffsetX, backOffsetY), registration: plotter,
+                               numbering: numbering.enabled ? numbering : nil, to: url) {
             message = L("Non sono riuscito a creare il PDF.")
             return
         }
@@ -204,7 +231,7 @@ final class Store: ObservableObject {
             while FileManager.default.fileExists(atPath: cut.path) {
                 cut = dir.appendingPathComponent("\(base) fustella \(n).pdf"); n += 1
             }
-            if PlotterExporter.export(settings: settings, result: r, cornerRadius: plotterRadius, to: cut) {
+            if PlotterExporter.export(settings: settings, result: r, cornerRadius: plotterRadius, shape: cutShape, to: cut) {
                 files.append(cut)
             } else {
                 message = L("Non sono riuscito a creare il PDF di taglio.")

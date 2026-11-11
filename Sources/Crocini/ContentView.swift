@@ -62,6 +62,7 @@ private struct SettingsPanel: View {
                     bleedCard
                     marksCard
                     plotterCard
+                    numberingCard
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 16)
@@ -304,8 +305,87 @@ private struct SettingsPanel: View {
                 .toggleStyle(.switch)
                 .font(Theme.font(.callout, .semibold))
             if store.plotter {
-                MMField("Angoli arrotondati", value: $store.plotterRadius)
+                FieldRow("Forma di taglio") {
+                    Text(store.cutShape?.name ?? L("Rettangolo"))
+                        .font(Theme.font(.callout, .semibold))
+                        .lineLimit(1).truncationMode(.middle)
+                        .frame(maxWidth: 140, alignment: .trailing)
+                }
+                HStack(spacing: 8) {
+                    Button { store.chooseCutShape() } label: {
+                        Label(store.cutShape == nil ? "Carica forma (SVG)" : "Cambia", systemImage: "square.and.arrow.down")
+                    }
+                    .buttonStyle(ChipButtonStyle(plate: .cyan))
+                    if store.cutShape != nil {
+                        Button { store.clearCutShape() } label: { Label("Rimuovi", systemImage: "xmark") }
+                            .buttonStyle(ChipButtonStyle(plate: .magenta))
+                    }
+                }
+                if let shape = store.cutShape {
+                    Text("Forma: \(String(format: "%.1f", shape.widthMM)) × \(String(format: "%.1f", shape.heightMM)) mm. Viene adattata alla misura dell'elemento.")
+                        .font(Theme.font(.caption)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button { store.fitItemToShape() } label: { Label("Misura dalla forma", systemImage: "arrow.up.left.and.arrow.down.right") }
+                        .buttonStyle(ChipButtonStyle(plate: .yellow))
+                } else {
+                    MMField("Angoli arrotondati", value: $store.plotterRadius)
+                }
                 Text("Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione.")
+                    .font(Theme.font(.caption)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var numberingCard: some View {
+        SectionCard(title: "Numerazione", symbol: "number", plate: .yellow, startsOpen: false) {
+            Toggle("Numero progressivo", isOn: $store.numbering.enabled.animation(Theme.spring))
+                .toggleStyle(.switch)
+                .font(Theme.font(.callout, .semibold))
+            if store.numbering.enabled {
+                IntField("Parti da", value: $store.numbering.start)
+                IntField("Passo", value: $store.numbering.step)
+                IntField("Cifre (zeri davanti)", value: $store.numbering.digits)
+                IntField("Fogli da produrre", value: $store.numbering.sheets, min: 1)
+                FieldRow("Prima") { TextField("", text: $store.numbering.prefix).textFieldStyle(.roundedBorder).frame(width: 110) }
+                FieldRow("Dopo") { TextField("", text: $store.numbering.suffix).textFieldStyle(.roundedBorder).frame(width: 110) }
+                FieldRow("Font") {
+                    Picker("", selection: $store.numbering.family) {
+                        ForEach(NSFontManager.shared.availableFontFamilies, id: \.self) { Text($0).tag($0) }
+                    }
+                    .labelsHidden().frame(width: 150)
+                }
+                Toggle("Grassetto", isOn: $store.numbering.bold).toggleStyle(.switch).font(Theme.font(.callout))
+                FieldRow("Corpo (pt)") {
+                    TextField("", value: $store.numbering.sizePt, format: .number.precision(.fractionLength(0...1)))
+                        .textFieldStyle(.roundedBorder).multilineTextAlignment(.trailing).frame(width: 70)
+                }
+                FieldRow("Colore") {
+                    ColorPicker("", selection: RGB.binding($store.numbering.color), supportsOpacity: false).labelsHidden()
+                }
+                MMField("Da sinistra", value: $store.numbering.x)
+                MMField("Dall'alto", value: $store.numbering.y)
+                FieldRow("Allineamento") {
+                    Picker("", selection: $store.numbering.align) {
+                        ForEach(Numbering.Align.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 190)
+                }
+                FieldRow("Rotazione") {
+                    Picker("", selection: $store.numbering.rotation) {
+                        ForEach([0, 90, 180, 270], id: \.self) { Text("\($0)°").tag($0) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 190)
+                }
+                if store.duplex {
+                    FieldRow("Lato") {
+                        Picker("", selection: $store.numbering.side) {
+                            ForEach(Numbering.Side.allCases) { Text($0.label).tag($0) }
+                        }
+                        .pickerStyle(.segmented).labelsHidden().frame(width: 190)
+                    }
+                }
+                Text("Primo numero: \(store.numbering.text(index: 0)), ultimo: \(store.numbering.text(index: max(0, store.numbering.sheets * store.result.count - 1))). La posizione è dall'angolo in alto a sinistra dell'elemento, a rifilo; il numero resta in anteprima e nel PDF. Con più fogli il PDF ha una pagina per foglio.")
                     .font(Theme.font(.caption)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

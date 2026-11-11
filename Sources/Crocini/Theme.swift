@@ -310,3 +310,21 @@ struct ChipLabel: View {
             .background(Capsule().fill(Theme.magenta.opacity(0.11)))
     }
 }
+
+/// Campo numerico intero con etichetta (numerazione).
+struct IntField: View {
+    let title: LocalizedStringKey
+    @Binding var value: Int
+    var min = Int.min
+
+    init(_ title: LocalizedStringKey, value: Binding<Int>, min: Int = Int.min) {
+        self.title = title; self._value = value; self.min = min
+    }
+
+    var body: some View {
+        FieldRow(title) {
+            TextField("", value: Binding(get: { value }, set: { value = Swift.max(min, $0) }), format: .number.grouping(.never))
+                .textFieldStyle(.roundedBorder).multilineTextAlignment(.trailing).frame(width: 90)
+        }
+    }
+}

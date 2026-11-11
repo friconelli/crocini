@@ -15,7 +15,9 @@ struct PreviewView: View {
         GeometryReader { geo in
             ZStack {
                 PreviewCanvas(progress: progress, zoom: viewport.zoom, offset: viewport.offset,
-                              s: s, r: r, artwork: showBack ? store.backArtwork : store.artwork, back: showBack, registration: store.plotter)
+                              s: s, r: r, artwork: showBack ? store.backArtwork : store.artwork, back: showBack, registration: store.plotter,
+                              shape: store.plotter ? store.cutShape : nil,
+                              numbering: store.numbering.appliesTo(back: showBack, duplex: store.duplex) ? store.numbering : nil)
                 if r.count == 0 { EmptyHint() }
                 if let m = viewport.marquee { MarqueeView(rect: m) }
                 InteractionLayer(viewport: viewport, page: page)
@@ -95,6 +97,8 @@ private struct PreviewCanvas: View, Animatable {
     let artwork: NSImage?
     var back = false
     var registration = false
+    var shape: CutShape?
+    var numbering: Numbering?
 
     var animatableData: AnimatablePair<Double, AnimatablePair<CGFloat, AnimatablePair<CGFloat, CGFloat>>> {
         get { .init(progress, .init(zoom, .init(offset.width, offset.height))) }
@@ -155,7 +159,21 @@ private struct PreviewCanvas: View, Animatable {
                              with: .color(Theme.magenta.opacity(0.65)),
                              style: StrokeStyle(lineWidth: 0.6, dash: [3, 2]))
             }
-            lines.stroke(rect(g.trim, p, pop, scale), with: .color(Theme.cyan.opacity(0.9)), lineWidth: 0.6)
+            if let shape {
+                lines.stroke(shapePath(shape, p, pop, scale), with: .color(Theme.cyan.opacity(0.9)), lineWidth: 0.8)
+            } else {
+                lines.stroke(rect(g.trim, p, pop, scale), with: .color(Theme.cyan.opacity(0.9)), lineWidth: 0.6)
+            }
+            if let n = numbering {
+                let lw = r.rotated ? p.height : p.width, lh = r.rotated ? p.width : p.height
+                let label = n.text(index: i)
+                var t = cell
+                t.translateBy(x: -lw / 2 + n.x, y: -lh / 2 + n.y)
+                t.rotate(by: .degrees(Double(n.rotation)))
+                let font = Font(n.nsFont(size: n.sizeMM) as CTFont)
+                t.draw(Text(label).font(font).foregroundColor(n.color.color), at: .zero,
+                       anchor: UnitPoint(x: n.align.unit, y: 0.5))
+            }
         }
 
         var marks = Path()
@@ -172,6 +190,24 @@ private struct PreviewCanvas: View, Animatable {
         m.opacity = min(1, max(0, progress * 2 - 0.6))
         // Spessore reale in anteprima, ma mai sotto mezzo pixel per restare visibili.
         m.stroke(marks, with: .color(s.markColor.color), lineWidth: max(0.5, s.markWidth * scale))
+    }
+
+    /// La forma di taglio personalizzata dentro la cella di un elemento, con lo stesso "salto" dell'elemento.
+    private func shapePath(_ shape: CutShape, _ p: Placement, _ pop: Double, _ scale: CGFloat) -> Path {
+        let cx = (p.x + p.width / 2), cy = (p.y + p.height / 2)
+        func tf(_ q: CGPoint) -> CGPoint {
+            CGPoint(x: (cx + (q.x - cx) * pop) * scale, y: (cy + (q.y - cy) * pop) * scale)
+        }
+        var path = Path()
+        for seg in shape.segments(in: CGRect(x: p.x, y: p.y, width: p.width, height: p.height), rotated: r.rotated) {
+            switch seg {
+            case .move(let q): path.move(to: tf(q))
+            case .line(let q): path.addLine(to: tf(q))
+            case .curve(let a, let b, let e): path.addCurve(to: tf(e), control1: tf(a), control2: tf(b))
+            case .close: path.closeSubpath()
+            }
+        }
+        return path
     }
 
     /// Rettangolo locale (centrato, eventualmente ruotato) riportato in coordinate di foglio scalate.

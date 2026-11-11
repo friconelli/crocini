@@ -7,7 +7,7 @@ import CoreGraphics
 enum PlotterExporter {
     static let k = 72.0 / 25.4
 
-    static func export(settings s: LayoutSettings, result r: LayoutResult, cornerRadius: Double, to url: URL) -> Bool {
+    static func export(settings s: LayoutSettings, result r: LayoutResult, cornerRadius: Double, shape: CutShape? = nil, to url: URL) -> Bool {
         guard r.count > 0 else { return false }
         let H = s.pageHeight
         func f(_ v: Double) -> String { String(format: "%.3f", v) }
@@ -18,7 +18,21 @@ enum PlotterExporter {
         // Linea di taglio (colore spot CutContour, 0,25 pt)
         c += "/CS1 CS 1 SCN 0.25 w 1 J 1 j\n"
         let radius = max(0, cornerRadius)
-        if s.gap < 0.001 && radius < 0.001 {
+        if let shape {
+            // Forma personalizzata: una per elemento, adattata al suo rettangolo (e girata se gli elementi sono ruotati)
+            for p in r.placements {
+                let cell = CGRect(x: p.x, y: p.y, width: p.width, height: p.height)
+                for seg in shape.segments(in: cell, rotated: r.rotated) {
+                    switch seg {
+                    case .move(let q): c += "\(X(q.x)) \(Y(q.y)) m "
+                    case .line(let q): c += "\(X(q.x)) \(Y(q.y)) l "
+                    case .curve(let a, let b, let e): c += "\(X(a.x)) \(Y(a.y)) \(X(b.x)) \(Y(b.y)) \(X(e.x)) \(Y(e.y)) c "
+                    case .close: c += "h "
+                    }
+                }
+                c += "S\n"
+            }
+        } else if s.gap < 0.001 && radius < 0.001 {
             // Elementi attaccati e angoli vivi: una sola linea per ogni lato di rifilo, tutta la griglia, senza tagli doppi.
             let xs = unique(r.placements.flatMap { [$0.x, $0.x + $0.width] })
             let ys = unique(r.placements.flatMap { [$0.y, $0.y + $0.height] })
