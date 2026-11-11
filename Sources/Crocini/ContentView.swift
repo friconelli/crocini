@@ -14,6 +14,7 @@ struct ContentView: View {
             PreviewView()
         }
         .ignoresSafeArea(.container, edges: .top)   // senza barra del titolo il contenuto parte dal bordo
+        .overlay(alignment: .top) { CMYKBar().frame(height: 4).ignoresSafeArea().allowsHitTesting(false) }
         .overlay { if dropping { DropOverlay() } }
         .animation(Theme.spring, value: dropping)
         // Si può rilasciare un file in qualsiasi punto della finestra.
@@ -103,16 +104,20 @@ private struct SettingsPanel: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("\(r.count)")
                     .font(Theme.font(size: 46, .heavy))
-                    .foregroundStyle(r.count > 0 ? AnyShapeStyle(Theme.brandGradient) : AnyShapeStyle(Color.secondary))
+                    .foregroundStyle(r.count > 0 ? Theme.ink : Color.secondary)
                     .contentTransition(.numericText())
+                    // evidenziatore giallo sotto il numero, come sul sito
+                    .background(alignment: .bottom) {
+                        Rectangle().fill(r.count > 0 ? Theme.yellow : .clear).frame(height: 15).offset(y: -5)
+                    }
                 Text(L(r.count == 1 ? "pezzo per foglio" : "pezzi per foglio"))
                     .font(Theme.font(.callout, .semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
                 if r.count > 0 {
                     VStack(alignment: .trailing, spacing: 3) {
-                        pill("\(r.columns) × \(r.rows)", "square.grid.2x2")
-                        if r.rotated { pill("ruotati", "rotate.right") }
+                        pill("\(r.columns) × \(r.rows)", "square.grid.2x2", .cyan)
+                        if r.rotated { pill("ruotati", "rotate.right", .yellow) }
                     }
                     .transition(.scale.combined(with: .opacity))
                 }
@@ -132,18 +137,19 @@ private struct SettingsPanel: View {
         )
     }
 
-    private func pill(_ text: String, _ symbol: String) -> some View {
+    private func pill(_ text: LocalizedStringKey, _ symbol: String, _ plate: Plate) -> some View {
         Label(text, systemImage: symbol)
             .font(Theme.font(.caption, .bold))
-            .foregroundStyle(Theme.magenta)
+            .foregroundStyle(plate.onColor == .white ? Color.white : Theme.ink)
             .padding(.horizontal, 9).padding(.vertical, 4)
-            .background(Capsule().fill(Theme.magenta.opacity(0.12)))
+            .background(Capsule().fill(plate.color.opacity(0.45)))
+            .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.55), lineWidth: 1))
     }
 
     // MARK: sezioni
 
     private var presetCard: some View {
-        SectionCard(title: "Preset", symbol: "sparkles") {
+        SectionCard(title: "Preset", symbol: "sparkles", plate: .yellow) {
             HStack(spacing: 8) {
                 Menu {
                     Section("Predefinite") {
@@ -166,11 +172,11 @@ private struct SettingsPanel: View {
                 } label: {
                     Label("Scegli", systemImage: "list.bullet.rectangle")
                 }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().tint(Theme.ink)
                 .font(Theme.font(.callout, .semibold))
-                .foregroundStyle(Theme.magenta)
+                .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(Capsule().fill(Theme.magenta.opacity(0.11)))
+                .background(Capsule().fill(Theme.cyan.opacity(0.32)))
 
                 Button {
                     newPresetName = ""
@@ -178,13 +184,13 @@ private struct SettingsPanel: View {
                 } label: {
                     Label("Salva questo", systemImage: "plus")
                 }
-                .buttonStyle(ChipButtonStyle())
+                .buttonStyle(ChipButtonStyle(plate: .yellow))
             }
         }
     }
 
     private var paperCard: some View {
-        SectionCard(title: "Foglio di stampa", symbol: "doc.plaintext") {
+        SectionCard(title: "Foglio di stampa", symbol: "doc.plaintext", plate: .cyan) {
             FieldRow("Formato") {
                 Picker("", selection: paperBinding) {
                     Text("Personalizzato").tag(Optional<PaperSize>.none)
@@ -204,7 +210,7 @@ private struct SettingsPanel: View {
     }
 
     private var itemCard: some View {
-        SectionCard(title: "Elemento da impaginare", symbol: "rectangle.on.rectangle") {
+        SectionCard(title: "Elemento da impaginare", symbol: "rectangle.on.rectangle", plate: .magenta) {
             FieldRow("Formato") {
                 Picker("", selection: itemBinding) {
                     Text("Personalizzato").tag(Optional<ItemPreset>.none)
@@ -225,14 +231,14 @@ private struct SettingsPanel: View {
     }
 
     private var bleedCard: some View {
-        SectionCard(title: "Abbondanza", symbol: "square.dashed.inset.filled") {
+        SectionCard(title: "Abbondanza", symbol: "square.dashed.inset.filled", plate: .yellow) {
             MMField("Abbondanza", value: $store.settings.bleed)
             HStack(spacing: 6) {
                 ForEach([0.0, 2, 3, 5], id: \.self) { v in
                     Button(v == 0 ? "Nessuna" : "\(Int(v)) mm") {
                         withAnimation(Theme.spring) { store.settings.bleed = v }
                     }
-                    .buttonStyle(ChipButtonStyle())
+                    .buttonStyle(ChipButtonStyle(plate: .cyan))
                 }
             }
             ForEach(BleedMode.allCases) { mode in
@@ -251,7 +257,7 @@ private struct SettingsPanel: View {
     }
 
     private var marksCard: some View {
-        SectionCard(title: "Segni di taglio", symbol: "scissors") {
+        SectionCard(title: "Segni di taglio", symbol: "scissors", plate: .black) {
             Toggle("Mostra i crocini", isOn: $store.settings.cropMarks.animation(Theme.spring))
                 .toggleStyle(.switch)
                 .font(Theme.font(.callout, .semibold))
@@ -267,11 +273,11 @@ private struct SettingsPanel: View {
                     } label: {
                         Label("Stili predefiniti", systemImage: "slider.horizontal.3")
                     }
-                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().tint(Theme.ink)
                 .font(Theme.font(.callout, .semibold))
-                .foregroundStyle(Theme.magenta)
+                .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(Capsule().fill(Theme.magenta.opacity(0.11)))
+                .background(Capsule().fill(Theme.yellow.opacity(0.5)))
 
                     MMField("Spessore", value: $store.settings.markWidth, digits: 2)
                     MMField("Lunghezza", value: $store.settings.markLength)

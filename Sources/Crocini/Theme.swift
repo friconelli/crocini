@@ -1,10 +1,13 @@
 import SwiftUI
 
 enum Theme {
-    static let magenta = Color(red: 0.93, green: 0.13, blue: 0.47)
-    static let magentaLight = Color(red: 1.0, green: 0.36, blue: 0.62)
-    static let magentaDeep = Color(red: 0.74, green: 0.04, blue: 0.36)
-    static let cyan = Color(red: 0.0, green: 0.68, blue: 0.93)
+    // Quadricromia: i colori di processo della stampa (C, M, Y) più il nero (K) per testi e bordi.
+    static let cyan = Color(red: 0.0, green: 0.68, blue: 0.94)          // #00AEEF
+    static let magenta = Color(red: 0.925, green: 0.0, blue: 0.549)     // #EC008C
+    static let yellow = Color(red: 1.0, green: 0.95, blue: 0.0)         // #FFF200
+    static let ink = Color(red: 0.08, green: 0.08, blue: 0.08)          // K
+    static let magentaLight = Color(red: 1.0, green: 0.24, blue: 0.66)
+    static let magentaDeep = Color(red: 0.78, green: 0.0, blue: 0.46)
     static let bleedColor = magenta
     /// Sfondo dell'anteprima: carta calda in chiaro, grafite in scuro.
     static let canvasBackground = Color(nsColor: NSColor(name: nil) { appearance in
@@ -49,6 +52,51 @@ enum Theme {
         for f in files where f.pathExtension.lowercased() == "ttf" || f.pathExtension.lowercased() == "otf" {
             CTFontManagerRegisterFontsForURL(f as CFURL, .process, nil)
         }
+    }
+}
+
+/// Una "lastra" della quadricromia: colore pieno e colore leggibile da metterci sopra.
+struct Plate {
+    let color: Color
+    let onColor: Color
+    static let cyan = Plate(color: Theme.cyan, onColor: Theme.ink)
+    static let magenta = Plate(color: Theme.magenta, onColor: .white)
+    static let yellow = Plate(color: Theme.yellow, onColor: Theme.ink)
+    static let black = Plate(color: Theme.ink, onColor: .white)
+}
+
+/// Barra colore C M Y K, come ai bordi di un foglio di prova.
+struct CMYKBar: View {
+    var body: some View {
+        HStack(spacing: 0) {
+            Theme.cyan; Theme.magenta; Theme.yellow; Theme.ink
+        }
+    }
+}
+
+/// Sfondo a retino: tre griglie di punti C M Y leggermente sfalsate, che sfumano verso l'angolo in alto a destra.
+struct HalftoneBackdrop: View {
+    var body: some View {
+        Canvas { ctx, size in
+            let step: CGFloat = 20
+            func layer(_ color: Color, dx: CGFloat, dy: CGFloat, r: CGFloat) {
+                var p = Path()
+                var y = dy
+                while y < size.height + step {
+                    var x = dx
+                    while x < size.width + step {
+                        p.addEllipse(in: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r))
+                        x += step
+                    }
+                    y += step
+                }
+                ctx.fill(p, with: .color(color))
+            }
+            layer(Theme.cyan.opacity(0.34), dx: 0, dy: 0, r: 1.5)
+            layer(Theme.magenta.opacity(0.28), dx: 7, dy: 7, r: 1.5)
+            layer(Theme.yellow.opacity(0.75), dx: 14, dy: 3, r: 1.7)
+        }
+        .mask(RadialGradient(colors: [.black, .clear], center: .topTrailing, startRadius: 0, endRadius: 780))
     }
 }
 
@@ -103,6 +151,7 @@ struct LogoMark: View {
 struct SectionCard<Content: View>: View {
     let title: LocalizedStringKey
     let symbol: String
+    var plate: Plate = .magenta
     var startsOpen = true
     @ViewBuilder let content: Content
     @State private var open = true
@@ -116,9 +165,10 @@ struct SectionCard<Content: View>: View {
                 HStack(spacing: 10) {
                     Image(systemName: symbol)
                         .font(Theme.font(size: 12, .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(plate.onColor)
                         .frame(width: 26, height: 26)
-                        .background(Theme.brandGradient, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(plate.color, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.ink, lineWidth: 1.4))
                     Text(title)
                         .font(Theme.font(.subheadline, .bold))
                     Spacer()
@@ -144,9 +194,9 @@ struct SectionCard<Content: View>: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Theme.magenta.opacity(hovering ? 0.45 : 0.10), lineWidth: 1)
+                .strokeBorder(hovering ? plate.color : Color.primary.opacity(0.10), lineWidth: hovering ? 2 : 1)
         )
-        .shadow(color: Theme.magenta.opacity(hovering ? 0.16 : 0.0), radius: 10, y: 3)
+        .shadow(color: plate.color.opacity(hovering ? 0.35 : 0.0), radius: 0, x: 3, y: 3)   // ombra piena, come una lastra sfalsata
         .onHover { h in withAnimation(.easeOut(duration: 0.18)) { hovering = h } }
         .onAppear { open = startsOpen }
     }
@@ -197,7 +247,7 @@ struct MMField: View {
                     .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.primary.opacity(focused ? 0.04 : 0.07)))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Theme.magenta.opacity(focused ? 0.9 : 0), lineWidth: 1.5))
+                        .strokeBorder(Theme.cyan.opacity(focused ? 1 : 0), lineWidth: 2))
                     .animation(.easeOut(duration: 0.15), value: focused)
                 Text("mm").font(Theme.font(.caption)).foregroundStyle(.tertiary)
             }
@@ -205,43 +255,42 @@ struct MMField: View {
     }
 }
 
-/// Pulsante principale: gradiente magenta, bagliore, rimbalzo alla pressione.
+/// Pulsante principale: magenta pieno, bordo nero e ombra piena, come una stampa a lastre; si "schiaccia" al clic.
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     @State private var hovering = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let down = configuration.isPressed
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        return configuration.label
             .font(Theme.font(.body, .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(enabled ? .white : Color.secondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(enabled ? AnyShapeStyle(Theme.brandGradient) : AnyShapeStyle(Color.gray.opacity(0.35)))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(.white.opacity(hovering && enabled ? 0.12 : 0))
-            )
-            .shadow(color: Theme.magenta.opacity(enabled ? (hovering ? 0.55 : 0.35) : 0), radius: hovering ? 14 : 8, y: 4)
-            .scaleEffect(configuration.isPressed ? 0.96 : (hovering && enabled ? 1.02 : 1))
-            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
-            .animation(.easeOut(duration: 0.18), value: hovering)
+            .background(shape.fill(enabled ? AnyShapeStyle(Theme.brandGradient) : AnyShapeStyle(Color.gray.opacity(0.25))))
+            .overlay(shape.strokeBorder(enabled ? Theme.ink : Color.gray.opacity(0.4), lineWidth: 2))
+            .background(shape.fill(enabled ? Theme.ink : .clear).offset(x: down ? 0 : (hovering ? 4 : 3), y: down ? 0 : (hovering ? 4 : 3)))
+            .offset(x: down ? 3 : (hovering && enabled ? -1 : 0), y: down ? 3 : (hovering && enabled ? -1 : 0))
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: down)
+            .animation(.easeOut(duration: 0.15), value: hovering)
             .onHover { hovering = $0 }
     }
 }
 
-/// Pulsante secondario a pillola, tinta magenta.
+/// Pulsante secondario a pillola, nel colore di una lastra (magenta, ciano o giallo).
 struct ChipButtonStyle: ButtonStyle {
+    var plate: Plate = .magenta
     @State private var hovering = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let magenta = plate.color == Theme.magenta
+        return configuration.label
             .font(Theme.font(.callout, .semibold))
-            .foregroundStyle(Theme.magenta)
+            .foregroundStyle(magenta ? Theme.magentaDeep : Theme.ink)
             .padding(.horizontal, 12).padding(.vertical, 7)
-            .background(Capsule().fill(Theme.magenta.opacity(hovering ? 0.20 : 0.11)))
+            .background(Capsule().fill(plate.color.opacity(hovering ? (magenta ? 0.22 : 0.55) : (magenta ? 0.12 : 0.32))))
+            .overlay(Capsule().strokeBorder(plate.color.opacity(hovering ? 0.9 : 0), lineWidth: 1.5))
             .scaleEffect(configuration.isPressed ? 0.95 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
             .animation(.easeOut(duration: 0.15), value: hovering)

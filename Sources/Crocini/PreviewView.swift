@@ -40,28 +40,12 @@ struct PreviewView: View {
     }
 }
 
-/// Sfondo: tinta calda con una griglia di piccoli crocini.
+/// Sfondo: carta chiara con un retino di punti C M Y che sfuma verso l'angolo in alto a destra.
 private struct PaperBackdrop: View {
     var body: some View {
         ZStack {
             Theme.canvasBackground
-            LinearGradient(colors: [Theme.magenta.opacity(0.10), .clear, Theme.cyan.opacity(0.06)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            Canvas { ctx, size in
-                let step: CGFloat = 36
-                var p = Path()
-                var y: CGFloat = step / 2
-                while y < size.height {
-                    var x: CGFloat = step / 2
-                    while x < size.width {
-                        p.move(to: CGPoint(x: x - 3, y: y)); p.addLine(to: CGPoint(x: x + 3, y: y))
-                        p.move(to: CGPoint(x: x, y: y - 3)); p.addLine(to: CGPoint(x: x, y: y + 3))
-                        x += step
-                    }
-                    y += step
-                }
-                ctx.stroke(p, with: .color(Theme.magenta.opacity(0.16)), lineWidth: 0.8)
-            }
+            HalftoneBackdrop()
         }
     }
 }

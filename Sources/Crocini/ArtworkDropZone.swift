@@ -21,6 +21,7 @@ struct ArtworkDropZone: View {
     @State private var hovering = false
     @State private var bounce = false
     @State private var dashPhase: CGFloat = 0
+    @State private var spin = 0.0
 
     var body: some View {
         Group {
@@ -71,9 +72,12 @@ struct ArtworkDropZone: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Theme.magenta.opacity(active ? 0.95 : 0.45),
-                                  style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 1.5,
+                    // bordo in quadricromia: ciano, magenta e giallo che girano lentamente
+                    .strokeBorder(AngularGradient(colors: [Theme.cyan, Theme.magenta, Theme.yellow, Theme.cyan],
+                                                  center: .center, angle: .degrees(spin)),
+                                  style: StrokeStyle(lineWidth: isTargeted ? 3 : 2,
                                                      dash: isTargeted ? [] : [7, 5], dashPhase: dashPhase))
+                    .opacity(active ? 1 : 0.8)
             )
             .scaleEffect(isTargeted ? 1.03 : 1)
         }
@@ -84,6 +88,7 @@ struct ArtworkDropZone: View {
         .onAppear {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { bounce = true }
             withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) { dashPhase = -24 }
+            withAnimation(.linear(duration: 7).repeatForever(autoreverses: false)) { spin = 360 }
         }
     }
 
@@ -139,13 +144,14 @@ struct ArtworkDropZone: View {
                     Button { store.fitItemToArtwork() } label: {
                         Label("Misura elemento", systemImage: "arrow.up.left.and.arrow.down.right")
                     }
+                    .buttonStyle(ChipButtonStyle(plate: .cyan))
                     .transition(.scale.combined(with: .opacity))
                 }
                 Button { store.chooseArtwork() } label: {
                     Label("Cambia", systemImage: "arrow.triangle.2.circlepath")
                 }
+                .buttonStyle(ChipButtonStyle(plate: .yellow))
             }
-            .buttonStyle(ChipButtonStyle())
             .help("Imposta l'elemento sulla misura del file · cambia file (o trascinane un altro)")
         }
         .scaleEffect(isTargeted ? 1.02 : 1)
