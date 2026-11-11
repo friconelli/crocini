@@ -115,3 +115,16 @@
 "Estrazione…" = "Extracting…";
 "Verifica dell'app…" = "Verifying the app…";
 "Riavvio di Crocini…" = "Restarting Crocini…";
+"Fronte-retro" = "Double-sided";
+"Retro" = "Back";
+"Fronte" = "Front";
+"Scegli il retro" = "Choose the back";
+"Rimuovi il retro" = "Remove the back";
+"Scegli la grafica del retro" = "Choose the artwork for the back";
+"Carica la grafica del retro, oppure spegni il fronte-retro." = "Load the artwork for the back, or turn double-sided off.";
+"Il PDF ha due pagine: stampalo fronte-retro girando sul lato lungo. Il retro è già specchiato." = "The PDF has two pages: print it double-sided, flipping on the long edge. The back is already mirrored.";
+"Plotter di taglio" = "Cutting plotter";
+"Esporta anche la fustella" = "Also export the cut file";
+"Angoli arrotondati" = "Rounded corners";
+"Non sono riuscito a creare il PDF di taglio." = "I couldn't create the cut PDF.";
+"Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione." = "The print PDF has four registration marks in the corners; a second PDF, “fustella”, holds the cut line (CutContour spot colour, for Summa, Roland, Graphtec and most RIPs) and the same marks in the same position.";

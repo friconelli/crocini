@@ -4,13 +4,25 @@ import SwiftUI
 enum PDFExporter {
     static let pointsPerMM = 72.0 / 25.4
 
-    /// Scrive un PDF a una pagina con elementi, abbondanza e segni di taglio.
+    /// Scrive un PDF con elementi, abbondanza e segni di taglio: una pagina, o due (fronte e retro) in fronte-retro.
+    /// Il retro è specchiato in orizzontale perché le colonne combacino stampando fronte-retro sul lato lungo.
     /// Ritorna false se non riesce a creare il file.
-    static func export(settings s: LayoutSettings, result r: LayoutResult, artwork: NSImage?, to url: URL) -> Bool {
+    static func export(settings s: LayoutSettings, result r: LayoutResult, artwork: NSImage?,
+                       backArtwork: NSImage? = nil, duplex: Bool = false, registration: Bool = false, to url: URL) -> Bool {
         let k = pointsPerMM
         var box = CGRect(x: 0, y: 0, width: s.pageWidth * k, height: s.pageHeight * k)
         guard let ctx = CGContext(url as CFURL, mediaBox: &box, nil) else { return false }
 
+        page(ctx, box: box, s: s, r: r, artwork: artwork, back: false, registration: registration)
+        if duplex {
+            page(ctx, box: box, s: s, r: LayoutEngine.mirrored(r, pageWidth: s.pageWidth), artwork: backArtwork, back: true, registration: registration)
+        }
+        ctx.closePDF()
+        return true
+    }
+
+    private static func page(_ ctx: CGContext, box: CGRect, s: LayoutSettings, r: LayoutResult, artwork: NSImage?, back: Bool, registration: Bool) {
+        let k = pointsPerMM
         ctx.beginPDFPage(nil)
         ctx.translateBy(x: 0, y: box.height)
         ctx.scaleBy(x: k, y: -k) // millimetri, origine in alto a sinistra
@@ -23,7 +35,8 @@ enum PDFExporter {
             let g = LayoutEngine.geometry(s, placement: p, rotated: r.rotated, imageSize: artwork?.size ?? .zero)
             ctx.saveGState()
             ctx.translateBy(x: p.x + p.width / 2, y: p.y + p.height / 2)
-            if r.rotated { ctx.rotate(by: .pi / 2) } // la grafica gira di 90° dentro la propria cella
+            // La grafica gira di 90° dentro la propria cella; sul retro in senso opposto, così dopo il giro del foglio si legge dritta.
+            if r.rotated { ctx.rotate(by: back ? -.pi / 2 : .pi / 2) }
 
             if g.flatBackground {
                 ctx.setFillColor(NSColor(s.bleedColor.color).cgColor)
@@ -47,9 +60,12 @@ enum PDFExporter {
         }
         ctx.strokePath()
 
+        if registration {   // segni di registrazione per il plotter: quadrati neri negli angoli
+            ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+            for m in LayoutEngine.registrationMarks(s) { ctx.fill(m) }
+        }
+
         NSGraphicsContext.restoreGraphicsState()
         ctx.endPDFPage()
-        ctx.closePDF()
-        return true
     }
 }

@@ -208,7 +208,7 @@ enum LayoutEngine {
     }
 
     /// Segmenti dei segni di taglio (coordinate in mm, origine in alto a sinistra).
-    /// I segni stanno solo sul bordo della griglia: valgono per un taglio a ghigliottina.
+    /// I segni esterni stanno sul bordo della griglia (taglio a ghigliottina); con `gap` > 0 ce ne sono anche tra gli elementi.
     static func cropMarkSegments(_ s: LayoutSettings, _ r: LayoutResult) -> [(x1: Double, y1: Double, x2: Double, y2: Double)] {
         guard s.cropMarks, r.count > 0 else { return [] }
         let off = s.markOffset
@@ -233,7 +233,42 @@ enum LayoutEngine {
             out.append((left - off, y, left - off - len, y))
             out.append((right + off, y, right + off + len, y))
         }
+
+        // Con una distanza tra gli elementi, i segni stanno anche nelle fessure: uno per ogni lato di rifilo,
+        // lungo tutta la fessura meno un piccolo respiro dagli angoli (la fessura può essere più stretta dei segni esterni).
+        if s.gap > 0.001 {
+            let inset = min(off, s.gap / 3)
+            let cols = r.placements.filter { abs($0.y - r.gridY) < 0.001 }.sorted { $0.x < $1.x }
+            let rows = r.placements.filter { abs($0.x - r.gridX) < 0.001 }.sorted { $0.y < $1.y }
+            for (a, b) in zip(rows, rows.dropFirst()) {           // fessure orizzontali tra una riga e la successiva
+                let y1 = a.y + a.height + inset, y2 = b.y - inset
+                for x in xs { out.append((x, y1, x, y2)) }
+            }
+            for (a, b) in zip(cols, cols.dropFirst()) {           // fessure verticali tra una colonna e la successiva
+                let x1 = a.x + a.width + inset, x2 = b.x - inset
+                for y in ys { out.append((x1, y, x2, y)) }
+            }
+        }
         return out
+    }
+
+    /// Segni di registrazione per il plotter di taglio: quattro quadrati pieni negli angoli del foglio
+    /// (coordinate in mm, origine in alto a sinistra). Stanno nel PDF di stampa e, nella stessa posizione, in quello di taglio.
+    static func registrationMarks(_ s: LayoutSettings) -> [CGRect] {
+        let size = 4.0, inset = 3.0
+        let w = s.pageWidth, h = s.pageHeight
+        return [CGRect(x: inset, y: inset, width: size, height: size),
+                CGRect(x: w - inset - size, y: inset, width: size, height: size),
+                CGRect(x: inset, y: h - inset - size, width: size, height: size),
+                CGRect(x: w - inset - size, y: h - inset - size, width: size, height: size)]
+    }
+
+    /// Lo stesso foglio visto da dietro: le colonne si specchiano (giro sul lato lungo, come nella stampa fronte-retro).
+    static func mirrored(_ r: LayoutResult, pageWidth: Double) -> LayoutResult {
+        var m = r
+        m.placements = r.placements.map { Placement(x: pageWidth - $0.x - $0.width, y: $0.y, width: $0.width, height: $0.height) }
+        m.gridX = pageWidth - r.gridX - r.gridWidth
+        return m
     }
 
     private static func unique(_ v: [Double]) -> [Double] {

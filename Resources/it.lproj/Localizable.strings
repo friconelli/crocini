@@ -115,3 +115,16 @@
 "Estrazione…" = "Estrazione…";
 "Verifica dell'app…" = "Verifica dell'app…";
 "Riavvio di Crocini…" = "Riavvio di Crocini…";
+"Fronte-retro" = "Fronte-retro";
+"Retro" = "Retro";
+"Fronte" = "Fronte";
+"Scegli il retro" = "Scegli il retro";
+"Rimuovi il retro" = "Rimuovi il retro";
+"Scegli la grafica del retro" = "Scegli la grafica del retro";
+"Carica la grafica del retro, oppure spegni il fronte-retro." = "Carica la grafica del retro, oppure spegni il fronte-retro.";
+"Il PDF ha due pagine: stampalo fronte-retro girando sul lato lungo. Il retro è già specchiato." = "Il PDF ha due pagine: stampalo fronte-retro girando sul lato lungo. Il retro è già specchiato.";
+"Plotter di taglio" = "Plotter di taglio";
+"Esporta anche la fustella" = "Esporta anche la fustella";
+"Angoli arrotondati" = "Angoli arrotondati";
+"Non sono riuscito a creare il PDF di taglio." = "Non sono riuscito a creare il PDF di taglio.";
+"Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione." = "Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione.";

@@ -55,11 +55,13 @@ private struct SettingsPanel: View {
                 VStack(spacing: 12) {
                     ArtworkDropZone(isTargeted: dropping)
                         .padding(.bottom, 2)
+                    BackSideCard()
                     presetCard
                     paperCard
                     itemCard
                     bleedCard
                     marksCard
+                    plotterCard
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 16)
@@ -292,6 +294,20 @@ private struct SettingsPanel: View {
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private var plotterCard: some View {
+        SectionCard(title: "Plotter di taglio", symbol: "rectangle.dashed", plate: .cyan, startsOpen: false) {
+            Toggle("Esporta anche la fustella", isOn: $store.plotter.animation(Theme.spring))
+                .toggleStyle(.switch)
+                .font(Theme.font(.callout, .semibold))
+            if store.plotter {
+                MMField("Angoli arrotondati", value: $store.plotterRadius)
+                Text("Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione.")
+                    .font(Theme.font(.caption)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

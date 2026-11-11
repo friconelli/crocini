@@ -12,6 +12,17 @@ final class Store: ObservableObject {
     @Published var artworkPixels: CGSize?
     @Published var message: String?
 
+    /// Fronte-retro: seconda grafica per il retro; il PDF ha due pagine (la seconda è specchiata).
+    @Published var duplex = false
+    @Published var backArtwork: NSImage?
+    @Published var backArtworkName: String?
+    /// Quale lato mostra l'anteprima.
+    @Published var previewBack = false
+
+    /// Plotter di taglio: nel PDF di stampa i segni di registrazione, più un secondo PDF con la linea di taglio.
+    @Published var plotter = false
+    @Published var plotterRadius = 0.0
+
     @Published var userPresets: [LayoutPreset] = []
 
     private static let presetsKey = "userPresets.v1"
@@ -122,6 +133,33 @@ final class Store: ObservableObject {
         settings.paperHeight = p.height
     }
 
+    func chooseBackArtwork() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.png, .jpeg, .pdf, .tiff, .heic, .gif, .webP]
+        panel.allowsMultipleSelection = false
+        panel.message = L("Scegli la grafica del retro")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        loadBackArtwork(url: url)
+    }
+
+    @discardableResult
+    func loadBackArtwork(url: URL) -> Bool {
+        guard Self.artworkExtensions.contains(url.pathExtension.lowercased()) else {
+            message = L("«%@» non è una grafica supportata. Usa PNG, JPEG, PDF, TIFF, HEIC, GIF o WebP.", url.lastPathComponent)
+            return false
+        }
+        guard let image = NSImage(contentsOf: url), image.size.width > 0 else {
+            message = L("Non riesco ad aprire «%@».", url.lastPathComponent)
+            return false
+        }
+        withAnimation(Theme.spring) { backArtwork = image; backArtworkName = url.lastPathComponent }
+        return true
+    }
+
+    func clearBackArtwork() {
+        withAnimation(Theme.spring) { backArtwork = nil; backArtworkName = nil; previewBack = false }
+    }
+
     func clearArtwork() {
         withAnimation(Theme.spring) {
             artwork = nil
@@ -139,13 +177,32 @@ final class Store: ObservableObject {
         }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.pdf]
-        panel.nameFieldStringValue = "Crocini \(fmt(settings.itemWidth))x\(fmt(settings.itemHeight)).pdf"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        if !PDFExporter.export(settings: settings, result: r, artwork: artwork, to: url) {
-            message = L("Non sono riuscito a creare il PDF.")
-        } else {
-            NSWorkspace.shared.activateFileViewerSelecting([url])
+        if duplex, backArtwork == nil {
+            message = L("Carica la grafica del retro, oppure spegni il fronte-retro.")
+            return
         }
+        panel.nameFieldStringValue = "Crocini \(fmt(settings.itemWidth))x\(fmt(settings.itemHeight))\(duplex ? " fronte-retro" : "").pdf"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if !PDFExporter.export(settings: settings, result: r, artwork: artwork,
+                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, registration: plotter, to: url) {
+            message = L("Non sono riuscito a creare il PDF.")
+            return
+        }
+        var files = [url]
+        if plotter {
+            // PDF di taglio accanto a quello di stampa; se esiste già un file con quel nome non lo sovrascrivo.
+            let dir = url.deletingLastPathComponent(), base = url.deletingPathExtension().lastPathComponent
+            var cut = dir.appendingPathComponent("\(base) fustella.pdf"), n = 2
+            while FileManager.default.fileExists(atPath: cut.path) {
+                cut = dir.appendingPathComponent("\(base) fustella \(n).pdf"); n += 1
+            }
+            if PlotterExporter.export(settings: settings, result: r, cornerRadius: plotterRadius, to: cut) {
+                files.append(cut)
+            } else {
+                message = L("Non sono riuscito a creare il PDF di taglio.")
+            }
+        }
+        NSWorkspace.shared.activateFileViewerSelecting(files)
     }
 
     private func fmt(_ v: Double) -> String {

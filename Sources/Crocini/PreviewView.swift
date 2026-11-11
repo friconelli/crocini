@@ -9,15 +9,27 @@ struct PreviewView: View {
 
     var body: some View {
         let s = store.settings
-        let r = store.result
+        let showBack = store.duplex && store.previewBack
+        let r = showBack ? LayoutEngine.mirrored(store.result, pageWidth: s.pageWidth) : store.result
         let page = CGSize(width: s.pageWidth, height: s.pageHeight)
         GeometryReader { geo in
             ZStack {
                 PreviewCanvas(progress: progress, zoom: viewport.zoom, offset: viewport.offset,
-                              s: s, r: r, artwork: store.artwork)
+                              s: s, r: r, artwork: showBack ? store.backArtwork : store.artwork, back: showBack, registration: store.plotter)
                 if r.count == 0 { EmptyHint() }
                 if let m = viewport.marquee { MarqueeView(rect: m) }
                 InteractionLayer(viewport: viewport, page: page)
+                if store.duplex {
+                    Picker("", selection: $store.previewBack.animation(Theme.spring)) {
+                        Text("Fronte").tag(false)
+                        Text("Retro").tag(true)
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 170)
+                    .padding(6)
+                    .background(.regularMaterial, in: Capsule())
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 18)
+                }
                 ZoomBar(viewport: viewport, viewSize: geo.size, page: page)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, 18)
@@ -27,6 +39,9 @@ struct PreviewView: View {
         .clipped()
         .onChange(of: r) { _ in replay() }
         .onChange(of: store.artworkName) { _ in replay() }
+        .onChange(of: store.backArtworkName) { _ in replay() }
+        .onChange(of: store.previewBack) { _ in replay() }
+        .onChange(of: store.duplex) { on in if !on { store.previewBack = false } }
         .onChange(of: s.bleedMode) { _ in replay() }
     }
 
@@ -78,6 +93,8 @@ private struct PreviewCanvas: View, Animatable {
     let s: LayoutSettings
     let r: LayoutResult
     let artwork: NSImage?
+    var back = false
+    var registration = false
 
     var animatableData: AnimatablePair<Double, AnimatablePair<CGFloat, AnimatablePair<CGFloat, CGFloat>>> {
         get { .init(progress, .init(zoom, .init(offset.width, offset.height))) }
@@ -117,7 +134,7 @@ private struct PreviewCanvas: View, Animatable {
             var cell = ctx
             cell.opacity = eased
             cell.translateBy(x: (p.x + p.width / 2) * scale, y: (p.y + p.height / 2) * scale)
-            if r.rotated { cell.rotate(by: .degrees(90)) }
+            if r.rotated { cell.rotate(by: .degrees(back ? -90 : 90)) }
             cell.scaleBy(x: scale * pop, y: scale * pop) // da qui in poi si lavora in mm
 
             if g.flatBackground {
@@ -145,6 +162,11 @@ private struct PreviewCanvas: View, Animatable {
         for seg in LayoutEngine.cropMarkSegments(s, r) {
             marks.move(to: CGPoint(x: seg.x1 * scale, y: seg.y1 * scale))
             marks.addLine(to: CGPoint(x: seg.x2 * scale, y: seg.y2 * scale))
+        }
+        if registration {
+            for m in LayoutEngine.registrationMarks(s) {
+                ctx.fill(Path(CGRect(x: m.minX * scale, y: m.minY * scale, width: m.width * scale, height: m.height * scale)), with: .color(.black))
+            }
         }
         var m = ctx
         m.opacity = min(1, max(0, progress * 2 - 0.6))
