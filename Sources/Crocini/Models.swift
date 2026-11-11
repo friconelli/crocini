@@ -252,6 +252,15 @@ enum LayoutEngine {
         return out
     }
 
+    /// Tutto il blocco spostato di (dx, dy) mm: serve a correggere il disallineamento del retro in stampa.
+    static func shifted(_ r: LayoutResult, dx: Double, dy: Double) -> LayoutResult {
+        guard dx != 0 || dy != 0 else { return r }
+        var m = r
+        m.placements = r.placements.map { Placement(x: $0.x + dx, y: $0.y + dy, width: $0.width, height: $0.height) }
+        m.gridX += dx; m.gridY += dy
+        return m
+    }
+
     /// Segni di registrazione per il plotter di taglio: quattro quadrati pieni negli angoli del foglio
     /// (coordinate in mm, origine in alto a sinistra). Stanno nel PDF di stampa e, nella stessa posizione, in quello di taglio.
     static func registrationMarks(_ s: LayoutSettings) -> [CGRect] {

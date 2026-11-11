@@ -10,7 +10,7 @@ struct PreviewView: View {
     var body: some View {
         let s = store.settings
         let showBack = store.duplex && store.previewBack
-        let r = showBack ? LayoutEngine.mirrored(store.result, pageWidth: s.pageWidth) : store.result
+        let r = showBack ? LayoutEngine.shifted(LayoutEngine.mirrored(store.result, pageWidth: s.pageWidth), dx: store.backOffsetX, dy: store.backOffsetY) : store.result
         let page = CGSize(width: s.pageWidth, height: s.pageHeight)
         GeometryReader { geo in
             ZStack {

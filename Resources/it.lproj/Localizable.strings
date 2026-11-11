@@ -128,3 +128,8 @@
 "Angoli arrotondati" = "Angoli arrotondati";
 "Non sono riuscito a creare il PDF di taglio." = "Non sono riuscito a creare il PDF di taglio.";
 "Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione." = "Il PDF di stampa ha quattro segni di registrazione negli angoli; un secondo PDF, «fustella», contiene la linea di taglio (colore spot CutContour, per Summa, Roland, Graphtec e la maggior parte dei RIP) e gli stessi segni, nella stessa posizione.";
+"Correggi l'allineamento del retro" = "Correggi l'allineamento del retro";
+"Destra (−sinistra)" = "Destra (−sinistra)";
+"Basso (−alto)" = "Basso (−alto)";
+"Azzera" = "Azzera";
+"Sposta tutto il blocco del retro, segni compresi. Guarda il retro nell'anteprima per vedere il risultato." = "Sposta tutto il blocco del retro, segni compresi. Guarda il retro nell'anteprima per vedere il risultato.";

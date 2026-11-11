@@ -220,6 +220,25 @@ struct BackSideCard: View {
                     Button { store.chooseBackArtwork() } label: { Label("Scegli il retro", systemImage: "photo.badge.plus") }
                         .buttonStyle(ChipButtonStyle(plate: .magenta))
                 }
+                if store.backArtwork != nil {
+                    DisclosureGroup("Correggi l'allineamento del retro") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            MMField("Destra (−sinistra)", value: $store.backOffsetX)
+                            MMField("Basso (−alto)", value: $store.backOffsetY)
+                            if store.backOffsetX != 0 || store.backOffsetY != 0 {
+                                Button { store.backOffsetX = 0; store.backOffsetY = 0 } label: {
+                                    Label("Azzera", systemImage: "arrow.counterclockwise")
+                                }
+                                .buttonStyle(ChipButtonStyle(plate: .yellow))
+                            }
+                            Text("Sposta tutto il blocco del retro, segni compresi. Guarda il retro nell'anteprima per vedere il risultato.")
+                                .font(Theme.font(.caption)).foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.top, 6)
+                    }
+                    .font(Theme.font(.callout, .semibold))
+                }
                 Text("Il PDF ha due pagine: stampalo fronte-retro girando sul lato lungo. Il retro è già specchiato.")
                     .font(Theme.font(.caption)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

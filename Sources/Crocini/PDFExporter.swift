@@ -8,14 +8,14 @@ enum PDFExporter {
     /// Il retro è specchiato in orizzontale perché le colonne combacino stampando fronte-retro sul lato lungo.
     /// Ritorna false se non riesce a creare il file.
     static func export(settings s: LayoutSettings, result r: LayoutResult, artwork: NSImage?,
-                       backArtwork: NSImage? = nil, duplex: Bool = false, registration: Bool = false, to url: URL) -> Bool {
+                       backArtwork: NSImage? = nil, duplex: Bool = false, backOffset: (x: Double, y: Double) = (0, 0), registration: Bool = false, to url: URL) -> Bool {
         let k = pointsPerMM
         var box = CGRect(x: 0, y: 0, width: s.pageWidth * k, height: s.pageHeight * k)
         guard let ctx = CGContext(url as CFURL, mediaBox: &box, nil) else { return false }
 
         page(ctx, box: box, s: s, r: r, artwork: artwork, back: false, registration: registration)
         if duplex {
-            page(ctx, box: box, s: s, r: LayoutEngine.mirrored(r, pageWidth: s.pageWidth), artwork: backArtwork, back: true, registration: registration)
+            page(ctx, box: box, s: s, r: LayoutEngine.shifted(LayoutEngine.mirrored(r, pageWidth: s.pageWidth), dx: backOffset.x, dy: backOffset.y), artwork: backArtwork, back: true, registration: registration)
         }
         ctx.closePDF()
         return true

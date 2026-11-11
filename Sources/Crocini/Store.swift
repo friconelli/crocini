@@ -18,6 +18,9 @@ final class Store: ObservableObject {
     @Published var backArtworkName: String?
     /// Quale lato mostra l'anteprima.
     @Published var previewBack = false
+    /// Correzione del retro in mm (destra e basso positivi, come si vede la pagina del retro): compensa il disallineamento della stampante.
+    @Published var backOffsetX = 0.0
+    @Published var backOffsetY = 0.0
 
     /// Plotter di taglio: nel PDF di stampa i segni di registrazione, più un secondo PDF con la linea di taglio.
     @Published var plotter = false
@@ -184,7 +187,7 @@ final class Store: ObservableObject {
         panel.nameFieldStringValue = "Crocini \(fmt(settings.itemWidth))x\(fmt(settings.itemHeight))\(duplex ? " fronte-retro" : "").pdf"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if !PDFExporter.export(settings: settings, result: r, artwork: artwork,
-                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, registration: plotter, to: url) {
+                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, backOffset: (backOffsetX, backOffsetY), registration: plotter, to: url) {
             message = L("Non sono riuscito a creare il PDF.")
             return
         }
