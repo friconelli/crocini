@@ -64,7 +64,7 @@ final class Store: ObservableObject {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.png, .jpeg, .pdf, .tiff, .heic, .gif, .webP]
         panel.allowsMultipleSelection = false
-        panel.message = "Scegli la grafica da ripetere sul foglio"
+        panel.message = L("Scegli la grafica da ripetere sul foglio")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         loadArtwork(url: url)
     }
@@ -73,11 +73,11 @@ final class Store: ObservableObject {
     @discardableResult
     func loadArtwork(url: URL) -> Bool {
         guard Self.artworkExtensions.contains(url.pathExtension.lowercased()) else {
-            message = "«\(url.lastPathComponent)» non è una grafica supportata. Usa PNG, JPEG, PDF, TIFF, HEIC, GIF o WebP."
+            message = L("«%@» non è una grafica supportata. Usa PNG, JPEG, PDF, TIFF, HEIC, GIF o WebP.", url.lastPathComponent)
             return false
         }
         guard let image = NSImage(contentsOf: url), image.size.width > 0 else {
-            message = "Non riesco ad aprire «\(url.lastPathComponent)»."
+            message = L("Non riesco ad aprire «%@».", url.lastPathComponent)
             return false
         }
         let (reliable, pixels) = Self.inspect(url)
@@ -134,7 +134,7 @@ final class Store: ObservableObject {
     func exportPDF() {
         let r = result
         guard r.count > 0 else {
-            message = "L'elemento non entra nel foglio: riduci le misure o i margini."
+            message = L("L'elemento non entra nel foglio: riduci le misure o i margini.")
             return
         }
         let panel = NSSavePanel()
@@ -142,7 +142,7 @@ final class Store: ObservableObject {
         panel.nameFieldStringValue = "Crocini \(fmt(settings.itemWidth))x\(fmt(settings.itemHeight)).pdf"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if !PDFExporter.export(settings: settings, result: r, artwork: artwork, to: url) {
-            message = "Non sono riuscito a creare il PDF."
+            message = L("Non sono riuscito a creare il PDF.")
         } else {
             NSWorkspace.shared.activateFileViewerSelecting([url])
         }

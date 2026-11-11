@@ -7,6 +7,7 @@ struct PaperSize: Identifiable, Hashable {
     let width: Double
     let height: Double
     var id: String { name }
+    var title: String { L(name) }
 
     static let all: [PaperSize] = [
         .init(name: "A4", width: 210, height: 297),
@@ -22,6 +23,7 @@ struct ItemPreset: Identifiable, Hashable {
     let width: Double
     let height: Double
     var id: String { name }
+    var title: String { L(name) }
 
     static let all: [ItemPreset] = [
         .init(name: "Biglietto da visita 85×55", width: 85, height: 55),
@@ -42,6 +44,8 @@ enum RotationMode: String, CaseIterable, Identifiable, Codable {
     case never = "No"
     case always = "Sì"
     var id: String { rawValue }
+    /// rawValue resta in italiano (è salvato nei preset); il testo mostrato è tradotto.
+    var label: String { L(rawValue) }
 }
 
 /// Come trattare l'abbondanza rispetto alla grafica importata.
@@ -50,6 +54,7 @@ enum BleedMode: String, CaseIterable, Identifiable, Codable {
     case flat = "Aggiungi con colore piatto"
     case stretch = "Aggiungi ingrandendo la grafica"
     var id: String { rawValue }
+    var label: String { L(rawValue) }
 }
 
 /// Colore salvabile nei preset (Color di SwiftUI non è Codable).
@@ -243,6 +248,8 @@ struct LayoutPreset: Identifiable, Codable, Equatable {
     var id = UUID()
     var name: String
     var settings: LayoutSettings
+    /// I preset predefiniti si traducono; quelli dell'utente restano com'è (non hanno una traduzione).
+    var title: String { L(name) }
 
     static let builtIn: [LayoutPreset] = [
         make("Biglietti da visita 85×55 su A4", paper: (210, 297), item: (85, 55)),
@@ -280,6 +287,7 @@ struct MarkStyle: Identifiable, Hashable {
     let width: Double
     let length: Double
     var id: String { name }
+    var title: String { L(name) }
 
     static let all: [MarkStyle] = [
         .init(name: "Standard (0,1 mm · 4 mm)", width: 0.1, length: 4),

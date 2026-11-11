@@ -18,7 +18,7 @@ struct CrociniApp: App {
                 .onAppear(perform: Snapshot.scheduleIfRequested)
         }
         .defaultSize(width: 1140, height: 780)
-        .windowToolbarStyle(.unified)
+        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Verifica aggiornamenti…") {

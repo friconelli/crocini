@@ -157,12 +157,12 @@ final class Updater: ObservableObject {
 
         var errorDescription: String? {
             switch self {
-            case .network: return "Errore di rete."
-            case .http(let code): return "GitHub ha risposto con errore \(code)."
-            case .missingAsset: return "La release non contiene \(Updater.assetName)."
-            case .notAnApp: return "L'app non è in esecuzione da un bundle .app."
-            case .notWritable: return "Impossibile scrivere nella cartella dell'app. Scarica la nuova versione manualmente."
-            case .badArchive: return "L'archivio scaricato non è valido."
+            case .network: return L("Errore di rete.")
+            case .http(let code): return L("GitHub ha risposto con errore %d.", code)
+            case .missingAsset: return L("La release non contiene %@.", Updater.assetName)
+            case .notAnApp: return L("L'app non è in esecuzione da un bundle .app.")
+            case .notWritable: return L("Impossibile scrivere nella cartella dell'app. Scarica la nuova versione manualmente.")
+            case .badArchive: return L("L'archivio scaricato non è valido.")
             }
         }
     }

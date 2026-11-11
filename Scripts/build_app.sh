@@ -19,6 +19,7 @@ cp "$BIN_DIR/$APP_NAME" "$APP_DIR/Contents/MacOS/$APP_NAME"
 chmod +x "$APP_DIR/Contents/MacOS/$APP_NAME"
 mkdir -p "$APP_DIR/Contents/Resources/Fonts"
 cp "$ROOT_DIR"/Resources/Fonts/* "$APP_DIR/Contents/Resources/Fonts/"
+cp -R "$ROOT_DIR"/Resources/*.lproj "$APP_DIR/Contents/Resources/"
 cp "$ROOT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 if [[ -n "${VERSION:-}" ]]; then
     V="${VERSION#v}"

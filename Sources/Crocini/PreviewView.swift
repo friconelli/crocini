@@ -23,7 +23,7 @@ struct PreviewView: View {
                     .padding(.bottom, 18)
             }
         }
-        .background(PaperBackdrop())
+        .background(PaperBackdrop().ignoresSafeArea())
         .clipped()
         .onChange(of: r) { _ in replay() }
         .onChange(of: store.artworkName) { _ in replay() }

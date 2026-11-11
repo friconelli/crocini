@@ -130,6 +130,7 @@ final class InteractionView: NSView {
 
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
+    override var mouseDownCanMoveWindow: Bool { false }   // il trascinamento sposta il foglio, non la finestra
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func setFrameSize(_ newSize: NSSize) {

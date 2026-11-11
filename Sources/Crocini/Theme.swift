@@ -88,7 +88,7 @@ struct LogoMark: View {
                 .frame(width: 22, height: 14)
                 .scaleEffect(closed ? 1 : 0.4)
             CropGlyph(inset: closed ? 0 : 9)
-                .stroke(.black, style: StrokeStyle(lineWidth: 3, lineCap: .square, lineJoin: .miter))
+                .stroke(Color(red: 1, green: 0.95, blue: 0), style: StrokeStyle(lineWidth: 3, lineCap: .square, lineJoin: .miter))
                 .frame(width: 30, height: 26)
         }
         .frame(width: 44, height: 44)
@@ -101,7 +101,7 @@ struct LogoMark: View {
 
 /// Sezione a scheda richiudibile, con icona colorata e animazione.
 struct SectionCard<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     let symbol: String
     var startsOpen = true
     @ViewBuilder let content: Content
@@ -154,10 +154,10 @@ struct SectionCard<Content: View>: View {
 
 /// Etichetta a sinistra, controllo a destra.
 struct FieldRow<Control: View>: View {
-    let label: String
+    let label: LocalizedStringKey
     @ViewBuilder let control: Control
 
-    init(_ label: String, @ViewBuilder control: () -> Control) {
+    init(_ label: LocalizedStringKey, @ViewBuilder control: () -> Control) {
         self.label = label
         self.control = control()
     }
@@ -173,12 +173,12 @@ struct FieldRow<Control: View>: View {
 
 /// Campo numerico in mm con bordo magenta quando è attivo.
 struct MMField: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Double
     var digits = 1
     @FocusState private var focused: Bool
 
-    init(_ title: String, value: Binding<Double>, digits: Int = 1) {
+    init(_ title: LocalizedStringKey, value: Binding<Double>, digits: Int = 1) {
         self.title = title
         self._value = value
         self.digits = digits
@@ -250,7 +250,7 @@ struct ChipButtonStyle: ButtonStyle {
 }
 
 struct ChipLabel: View {
-    let text: String
+    let text: LocalizedStringKey
     let symbol: String
     var body: some View {
         Label(text, systemImage: symbol)

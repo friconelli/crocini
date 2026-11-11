@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     @EnvironmentObject var store: Store
@@ -12,6 +13,7 @@ struct ContentView: View {
             Divider()
             PreviewView()
         }
+        .ignoresSafeArea(.container, edges: .top)   // senza barra del titolo il contenuto parte dal bordo
         .overlay { if dropping { DropOverlay() } }
         .animation(Theme.spring, value: dropping)
         // Si può rilasciare un file in qualsiasi punto della finestra.
@@ -20,6 +22,7 @@ struct ContentView: View {
         }
         .tint(Theme.magenta)
         .font(Theme.font(.callout))
+        .background(WindowChrome())
         .sheet(isPresented: $updater.showSheet) { UpdateSheet(updater: updater) }
         .task {
             // Controllo silenzioso all'avvio: la finestra compare solo se c'è una novità.
@@ -63,7 +66,7 @@ private struct SettingsPanel: View {
             .scrollIndicators(.hidden)
             footer
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
         .sheet(isPresented: $showSaveSheet) { saveSheet }
     }
 
@@ -91,7 +94,7 @@ private struct SettingsPanel: View {
             }
         }
         .animation(Theme.spring, value: updater.isUpdateAvailable)
-        .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 12)
+        .padding(.horizontal, 16).padding(.top, 34).padding(.bottom, 12)   // sotto i pallini del sistema
     }
 
     private var footer: some View {
@@ -102,7 +105,7 @@ private struct SettingsPanel: View {
                     .font(Theme.font(size: 46, .heavy))
                     .foregroundStyle(r.count > 0 ? AnyShapeStyle(Theme.brandGradient) : AnyShapeStyle(Color.secondary))
                     .contentTransition(.numericText())
-                Text(r.count == 1 ? "pezzo per foglio" : "pezzi per foglio")
+                Text(L(r.count == 1 ? "pezzo per foglio" : "pezzi per foglio"))
                     .font(Theme.font(.callout, .semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -145,18 +148,18 @@ private struct SettingsPanel: View {
                 Menu {
                     Section("Predefinite") {
                         ForEach(LayoutPreset.builtIn) { p in
-                            Button(p.name) { withAnimation(Theme.spring) { store.apply(p) } }
+                            Button(p.title) { withAnimation(Theme.spring) { store.apply(p) } }
                         }
                     }
                     if !store.userPresets.isEmpty {
                         Section("Mie") {
                             ForEach(store.userPresets) { p in
-                                Button(p.name) { withAnimation(Theme.spring) { store.apply(p) } }
+                                Button(p.title) { withAnimation(Theme.spring) { store.apply(p) } }
                             }
                         }
                         Menu("Elimina preset") {
                             ForEach(store.userPresets) { p in
-                                Button(p.name, role: .destructive) { store.deletePreset(p) }
+                                Button(p.title, role: .destructive) { store.deletePreset(p) }
                             }
                         }
                     }
@@ -185,7 +188,7 @@ private struct SettingsPanel: View {
             FieldRow("Formato") {
                 Picker("", selection: paperBinding) {
                     Text("Personalizzato").tag(Optional<PaperSize>.none)
-                    ForEach(PaperSize.all) { Text($0.name).tag(Optional($0)) }
+                    ForEach(PaperSize.all) { Text($0.title).tag(Optional($0)) }
                 }
                 .labelsHidden().fixedSize()
             }
@@ -205,7 +208,7 @@ private struct SettingsPanel: View {
             FieldRow("Formato") {
                 Picker("", selection: itemBinding) {
                     Text("Personalizzato").tag(Optional<ItemPreset>.none)
-                    ForEach(ItemPreset.all) { Text($0.name).tag(Optional($0)) }
+                    ForEach(ItemPreset.all) { Text($0.title).tag(Optional($0)) }
                 }
                 .labelsHidden().fixedSize()
             }
@@ -214,7 +217,7 @@ private struct SettingsPanel: View {
             MMField("Distanza", value: $store.settings.gap)
             FieldRow("Ruota") {
                 Picker("", selection: $store.settings.rotation) {
-                    ForEach(RotationMode.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(RotationMode.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented).labelsHidden().frame(width: 190)
             }
@@ -233,7 +236,7 @@ private struct SettingsPanel: View {
                 }
             }
             ForEach(BleedMode.allCases) { mode in
-                ChoiceRow(title: mode.rawValue, selected: store.settings.bleedMode == mode) {
+                ChoiceRow(title: mode.label, selected: store.settings.bleedMode == mode) {
                     withAnimation(Theme.spring) { store.settings.bleedMode = mode }
                 }
             }
@@ -256,7 +259,7 @@ private struct SettingsPanel: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Menu {
                         ForEach(MarkStyle.all) { m in
-                            Button(m.name) {
+                            Button(m.title) {
                                 store.settings.markWidth = m.width
                                 store.settings.markLength = m.length
                             }
@@ -357,4 +360,21 @@ private struct ChoiceRow: View {
         .onHover { hovering = $0 }
         .animation(Theme.spring, value: selected)
     }
+}
+
+/// Finestra senza barra del titolo: contenuto a tutta altezza, pallini del sistema in alto a sinistra,
+/// e finestra trascinabile da qualsiasi punto dello sfondo.
+private struct WindowChrome: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        DispatchQueue.main.async {
+            guard let w = v.window else { return }
+            w.titlebarAppearsTransparent = true
+            w.titleVisibility = .hidden
+            w.styleMask.insert(.fullSizeContentView)
+            w.isMovableByWindowBackground = true
+        }
+        return v
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }

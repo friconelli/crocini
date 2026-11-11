@@ -36,6 +36,11 @@ struct ArtworkDropZone: View {
 
     private var active: Bool { isTargeted || hovering }
 
+    /// Millimetri con un decimale, con la virgola o il punto della lingua del sistema.
+    private static func mm(_ v: CGFloat) -> String {
+        Double(v).formatted(.number.precision(.fractionLength(1)))
+    }
+
     // MARK: vuota
 
     private var empty: some View {
@@ -52,9 +57,9 @@ struct ArtworkDropZone: View {
                         .offset(y: bounce && !isTargeted ? -3 : 0)
                         .scaleEffect(isTargeted ? 1.15 : 1)
                 }
-                Text(isTargeted ? "Rilascia per caricare" : "Trascina qui la tua grafica")
+                Text(L(isTargeted ? "Rilascia per caricare" : "Trascina qui la tua grafica"))
                     .font(Theme.font(.callout, .bold))
-                Text(isTargeted ? " " : "oppure clicca per scegliere · PNG, JPEG, PDF")
+                Text(isTargeted ? " " : L("oppure clicca per scegliere · PNG, JPEG, PDF"))
                     .font(Theme.font(.caption))
                     .foregroundStyle(.secondary)
             }
@@ -119,7 +124,7 @@ struct ArtworkDropZone: View {
                     .font(Theme.font(.callout, .bold))
                     .lineLimit(1).truncationMode(.middle)
                 if let size = store.artworkSizeMM {
-                    Text(String(format: "%.1f × %.1f mm", size.width, size.height))
+                    Text("\(Self.mm(size.width)) × \(Self.mm(size.height)) mm")
                         .font(Theme.font(.caption)).foregroundStyle(.secondary)
                 } else if let px = store.artworkPixels {
                     Text("\(Int(px.width)) × \(Int(px.height)) px")
