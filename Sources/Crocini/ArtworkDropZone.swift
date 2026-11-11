@@ -210,9 +210,11 @@ struct BackSideCard: View {
                                 .lineLimit(1).truncationMode(.middle)
                         }
                         Spacer(minLength: 0)
+                    }
+                    HStack(spacing: 8) {
                         Button { store.chooseBackArtwork() } label: { Label("Cambia", systemImage: "arrow.triangle.2.circlepath") }
                             .buttonStyle(ChipButtonStyle(plate: .yellow))
-                        Button { store.clearBackArtwork() } label: { Image(systemName: "xmark") }
+                        Button { store.clearBackArtwork() } label: { Label("Rimuovi", systemImage: "xmark") }
                             .buttonStyle(ChipButtonStyle(plate: .magenta))
                             .help("Rimuovi il retro")
                     }

@@ -35,6 +35,11 @@ final class Store: ObservableObject {
         if let i = CommandLine.arguments.firstIndex(of: "--art"), i + 1 < CommandLine.arguments.count {
             loadArtwork(url: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
         }
+        // Solo per le prove: --back file.png attiva il fronte-retro con quel retro.
+        if let i = CommandLine.arguments.firstIndex(of: "--back"), i + 1 < CommandLine.arguments.count {
+            duplex = true
+            loadBackArtwork(url: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
+        }
         if let data = UserDefaults.standard.data(forKey: Self.presetsKey),
            let saved = try? JSONDecoder().decode([LayoutPreset].self, from: data) {
             userPresets = saved

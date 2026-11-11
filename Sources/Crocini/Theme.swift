@@ -287,6 +287,7 @@ struct ChipButtonStyle: ButtonStyle {
         let magenta = plate.color == Theme.magenta
         return configuration.label
             .font(Theme.font(.callout, .semibold))
+            .lineLimit(1).fixedSize()   // l'etichetta non va mai a capo
             .foregroundStyle(magenta ? Theme.magentaDeep : Theme.ink)
             .padding(.horizontal, 12).padding(.vertical, 7)
             .background(Capsule().fill(plate.color.opacity(hovering ? (magenta ? 0.22 : 0.55) : (magenta ? 0.12 : 0.32))))
