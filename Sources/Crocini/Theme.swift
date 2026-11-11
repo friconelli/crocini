@@ -194,10 +194,10 @@ struct SectionCard<Content: View>: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(hovering ? plate.color : Color.primary.opacity(0.10), lineWidth: hovering ? 2 : 1)
+                .strokeBorder(hovering ? plate.color.opacity(0.7) : Color.primary.opacity(0.10), lineWidth: 1)
         )
-        .shadow(color: plate.color.opacity(hovering ? 0.35 : 0.0), radius: 0, x: 3, y: 3)   // ombra piena, come una lastra sfalsata
-        .onHover { h in withAnimation(.easeOut(duration: 0.18)) { hovering = h } }
+        .animation(.easeOut(duration: 0.15), value: hovering)
+        .onHover { hovering = $0 }
         .onAppear { open = startsOpen }
     }
 }
