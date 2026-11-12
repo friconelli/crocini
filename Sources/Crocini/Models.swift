@@ -13,6 +13,7 @@ struct PaperSize: Identifiable, Hashable {
         .init(name: "A4", width: 210, height: 297),
         .init(name: "A3", width: 297, height: 420),
         .init(name: "SRA3", width: 320, height: 450),
+        .init(name: "Super B/A3", width: 330, height: 483),
         .init(name: "A5", width: 148, height: 210),
         .init(name: "Lettera", width: 215.9, height: 279.4),
     ]
