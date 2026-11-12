@@ -84,8 +84,8 @@ struct RGB: Codable, Equatable {
 
 struct LayoutSettings: Equatable, Codable {
     // Foglio di stampa
-    var paperWidth = 210.0
-    var paperHeight = 297.0
+    var paperWidth = 297.0
+    var paperHeight = 420.0
     var landscape = false
     var margin = 10.0
 

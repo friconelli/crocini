@@ -66,8 +66,8 @@ private struct SettingsPanel: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 16)
+                .background(ScrollStyler())
             }
-            .scrollIndicators(.hidden)
             footer
         }
         .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
