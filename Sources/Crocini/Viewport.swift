@@ -299,8 +299,8 @@ struct ZoomBar: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            toolButton(.hand, "hand.raised.fill", help: "Mano (H) — trascina per spostarti; spazio per usarla al volo")
-            toolButton(.zoom, "magnifyingglass", help: "Lente (Z) — clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area")
+            toolButton(.hand, "hand.raised.fill", help: "Mano (H): trascina per spostarti; spazio per usarla al volo")
+            toolButton(.zoom, "magnifyingglass", help: "Lente (Z): clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area")
             divider
             iconButton("minus", help: "Riduci (−)") { viewport.zoomOut() }
             Menu {

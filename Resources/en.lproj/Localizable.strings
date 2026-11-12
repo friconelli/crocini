@@ -1,4 +1,4 @@
-/* Crocini — English. Keys are the Italian source texts. */
+/* Crocini: English. Keys are the Italian source texts. */
 "Rilascia per caricare" = "Drop to load";
 "Trascina qui la tua grafica" = "Drop your artwork here";
 "oppure clicca per scegliere · PNG, JPEG, PDF" = "or click to choose · PNG, JPEG, PDF";
@@ -51,8 +51,8 @@
 "Dimensioni reali (100%)" = "Actual size (100%)";
 "L'elemento non entra nel foglio" = "The item doesn't fit on the sheet";
 "Riduci le misure, i margini o l'abbondanza." = "Reduce the sizes, margins or bleed.";
-"Mano (H) — trascina per spostarti; spazio per usarla al volo" = "Hand (H) — drag to pan; hold space to use it on the fly";
-"Lente (Z) — clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area" = "Lens (Z) — click to zoom in, ⌥ click to zoom out, drag to zoom into an area";
+"Mano (H): trascina per spostarti; spazio per usarla al volo" = "Hand (H): drag to pan; hold space to use it on the fly";
+"Lente (Z): clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area" = "Lens (Z): click to zoom in, ⌥ click to zoom out, drag to zoom into an area";
 "Riduci (−)" = "Zoom out (−)";
 "Ingrandisci (+)" = "Zoom in (+)";
 "Adatta al foglio (⌘0)" = "Fit to sheet (⌘0)";

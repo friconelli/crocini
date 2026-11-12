@@ -20,7 +20,7 @@ enum Theme {
                                               startPoint: .topLeading, endPoint: .bottomTrailing)
     static let spring = Animation.spring(response: 0.38, dampingFraction: 0.78)
 
-    // MARK: Tipografia — Bricolage Grotesque (OFL), inclusa nell'app in Resources/Fonts.
+    // MARK: Tipografia: Bricolage Grotesque (OFL), inclusa nell'app in Resources/Fonts.
     static let fontFamily = "Bricolage Grotesque"
 
     static func font(_ style: Font.TextStyle, _ weight: Font.Weight = .regular) -> Font {

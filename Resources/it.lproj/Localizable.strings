@@ -1,4 +1,4 @@
-/* Crocini — Italiano. Le chiavi sono già i testi italiani. */
+/* Crocini: Italiano. Le chiavi sono già i testi italiani. */
 "Rilascia per caricare" = "Rilascia per caricare";
 "Trascina qui la tua grafica" = "Trascina qui la tua grafica";
 "oppure clicca per scegliere · PNG, JPEG, PDF" = "oppure clicca per scegliere · PNG, JPEG, PDF";
@@ -51,8 +51,8 @@
 "Dimensioni reali (100%)" = "Dimensioni reali (100%)";
 "L'elemento non entra nel foglio" = "L'elemento non entra nel foglio";
 "Riduci le misure, i margini o l'abbondanza." = "Riduci le misure, i margini o l'abbondanza.";
-"Mano (H) — trascina per spostarti; spazio per usarla al volo" = "Mano (H) — trascina per spostarti; spazio per usarla al volo";
-"Lente (Z) — clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area" = "Lente (Z) — clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area";
+"Mano (H): trascina per spostarti; spazio per usarla al volo" = "Mano (H): trascina per spostarti; spazio per usarla al volo";
+"Lente (Z): clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area" = "Lente (Z): clic ingrandisce, ⌥ clic rimpicciolisce, trascina per zoomare su un'area";
 "Riduci (−)" = "Riduci (−)";
 "Ingrandisci (+)" = "Ingrandisci (+)";
 "Adatta al foglio (⌘0)" = "Adatta al foglio (⌘0)";
