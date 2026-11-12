@@ -305,6 +305,20 @@ private struct SettingsPanel: View {
                 .toggleStyle(.switch)
                 .font(Theme.font(.callout, .semibold))
             if store.plotter {
+                FieldRow("Profilo") {
+                    Picker("", selection: $store.plotterProfile) {
+                        ForEach(PlotterProfile.allCases) { Text($0.title).tag($0) }
+                    }
+                    .labelsHidden().fixedSize()
+                }
+                if store.plotterProfile.drawsMarks {
+                    MMField("Segni: misura", value: $store.registrationStyle.size)
+                    MMField("Segni: dal bordo", value: $store.registrationStyle.inset)
+                } else {
+                    Text("Graphtec con iMark: Crocini non disegna i segni di registrazione. Il PDF «fustella» ha solo la linea di taglio, su un livello «CutContour»: aprilo in Illustrator e fai aggiungere i segni ad iMark. Tieni almeno 6 mm di margine dal bordo del foglio.")
+                        .font(Theme.font(.caption)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 FieldRow("Forma di taglio") {
                     Text(store.cutShape?.name ?? L("Rettangolo"))
                         .font(Theme.font(.callout, .semibold))

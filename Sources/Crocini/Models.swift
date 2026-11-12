@@ -116,6 +116,25 @@ struct LayoutSettings: Equatable, Codable {
     var effectiveMargin: Double { cropMarks ? max(margin, markOffset + markLength + 1) : margin }
 }
 
+/// Misura e distanza dal bordo dei quadrati di registrazione (mm).
+struct RegistrationStyle: Equatable {
+    var size = 4.0
+    var inset = 3.0
+}
+
+/// Profilo del plotter: cambia cosa finisce nei PDF.
+enum PlotterProfile: String, CaseIterable, Identifiable {
+    /// Quadrati di registrazione nel PDF di stampa e in quello di taglio (formato generico).
+    case generic
+    /// Graphtec con iMark/ARMS: i segni li crea iMark da Illustrator; Crocini esporta solo la linea di taglio (livello a parte).
+    case graphtecIMark
+    var id: String { rawValue }
+    var title: String {
+        switch self { case .generic: return L("Generico"); case .graphtecIMark: return L("Graphtec (iMark)") }
+    }
+    var drawsMarks: Bool { self == .generic }
+}
+
 struct Placement: Equatable {
     var x: Double
     var y: Double
@@ -264,8 +283,8 @@ enum LayoutEngine {
 
     /// Segni di registrazione per il plotter di taglio: quattro quadrati pieni negli angoli del foglio
     /// (coordinate in mm, origine in alto a sinistra). Stanno nel PDF di stampa e, nella stessa posizione, in quello di taglio.
-    static func registrationMarks(_ s: LayoutSettings) -> [CGRect] {
-        let size = 4.0, inset = 3.0
+    static func registrationMarks(_ s: LayoutSettings, style: RegistrationStyle = RegistrationStyle()) -> [CGRect] {
+        let size = style.size, inset = style.inset
         let w = s.pageWidth, h = s.pageHeight
         return [CGRect(x: inset, y: inset, width: size, height: size),
                 CGRect(x: w - inset - size, y: inset, width: size, height: size),

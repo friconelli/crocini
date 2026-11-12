@@ -29,6 +29,8 @@ final class Store: ObservableObject {
     /// Numero progressivo da stampare su ogni elemento.
     @Published var numbering = Numbering()
     @Published var plotterRadius = 0.0
+    @Published var plotterProfile = PlotterProfile.generic
+    @Published var registrationStyle = RegistrationStyle()
 
     @Published var userPresets: [LayoutPreset] = []
 
@@ -218,7 +220,7 @@ final class Store: ObservableObject {
         panel.nameFieldStringValue = "Crocini \(fmt(settings.itemWidth))x\(fmt(settings.itemHeight))\(duplex ? " fronte-retro" : "").pdf"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if !PDFExporter.export(settings: settings, result: r, artwork: artwork,
-                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, backOffset: (backOffsetX, backOffsetY), registration: plotter,
+                               backArtwork: duplex ? backArtwork : nil, duplex: duplex, backOffset: (backOffsetX, backOffsetY), registration: plotter && plotterProfile.drawsMarks ? registrationStyle : nil,
                                numbering: numbering.enabled ? numbering : nil, to: url) {
             message = L("Non sono riuscito a creare il PDF.")
             return
@@ -231,7 +233,8 @@ final class Store: ObservableObject {
             while FileManager.default.fileExists(atPath: cut.path) {
                 cut = dir.appendingPathComponent("\(base) fustella \(n).pdf"); n += 1
             }
-            if PlotterExporter.export(settings: settings, result: r, cornerRadius: plotterRadius, shape: cutShape, to: cut) {
+            if PlotterExporter.export(settings: settings, result: r, cornerRadius: plotterRadius, shape: cutShape,
+                                      registration: plotterProfile.drawsMarks ? registrationStyle : nil, to: cut) {
                 files.append(cut)
             } else {
                 message = L("Non sono riuscito a creare il PDF di taglio.")

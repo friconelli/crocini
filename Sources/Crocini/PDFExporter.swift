@@ -8,7 +8,7 @@ enum PDFExporter {
     /// Il retro è specchiato in orizzontale perché le colonne combacino stampando fronte-retro sul lato lungo.
     /// Ritorna false se non riesce a creare il file.
     static func export(settings s: LayoutSettings, result r: LayoutResult, artwork: NSImage?,
-                       backArtwork: NSImage? = nil, duplex: Bool = false, backOffset: (x: Double, y: Double) = (0, 0), registration: Bool = false, numbering: Numbering? = nil, to url: URL) -> Bool {
+                       backArtwork: NSImage? = nil, duplex: Bool = false, backOffset: (x: Double, y: Double) = (0, 0), registration: RegistrationStyle? = nil, numbering: Numbering? = nil, to url: URL) -> Bool {
         let k = pointsPerMM
         var box = CGRect(x: 0, y: 0, width: s.pageWidth * k, height: s.pageHeight * k)
         guard let ctx = CGContext(url as CFURL, mediaBox: &box, nil) else { return false }
@@ -24,7 +24,7 @@ enum PDFExporter {
         return true
     }
 
-    private static func page(_ ctx: CGContext, box: CGRect, s: LayoutSettings, r: LayoutResult, artwork: NSImage?, back: Bool, registration: Bool, numbering: Numbering?, sheet: Int, duplex: Bool) {
+    private static func page(_ ctx: CGContext, box: CGRect, s: LayoutSettings, r: LayoutResult, artwork: NSImage?, back: Bool, registration: RegistrationStyle?, numbering: Numbering?, sheet: Int, duplex: Bool) {
         let k = pointsPerMM
         ctx.beginPDFPage(nil)
         ctx.translateBy(x: 0, y: box.height)
@@ -75,9 +75,9 @@ enum PDFExporter {
         }
         ctx.strokePath()
 
-        if registration {   // segni di registrazione per il plotter: quadrati neri negli angoli
+        if let registration {   // segni di registrazione per il plotter: quadrati neri negli angoli
             ctx.setFillColor(CGColor(gray: 0, alpha: 1))
-            for m in LayoutEngine.registrationMarks(s) { ctx.fill(m) }
+            for m in LayoutEngine.registrationMarks(s, style: registration) { ctx.fill(m) }
         }
 
         NSGraphicsContext.restoreGraphicsState()

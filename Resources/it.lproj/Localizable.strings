@@ -162,3 +162,9 @@
 "Non trovo nessun tracciato in «%@». Serve un SVG con forme vettoriali (tracciati, rettangoli, cerchi, poligoni)." = "Non trovo nessun tracciato in «%@». Serve un SVG con forme vettoriali (tracciati, rettangoli, cerchi, poligoni).";
 "Forma: %@ × %@ mm. Viene adattata alla misura dell'elemento." = "Forma: %@ × %@ mm. Viene adattata alla misura dell'elemento.";
 "Primo numero: %@, ultimo: %@. La posizione è dall'angolo in alto a sinistra dell'elemento, a rifilo; il numero resta in anteprima e nel PDF. Con più fogli il PDF ha una pagina per foglio." = "Primo numero: %@, ultimo: %@. La posizione è dall'angolo in alto a sinistra dell'elemento, a rifilo; il numero resta in anteprima e nel PDF. Con più fogli il PDF ha una pagina per foglio.";
+"Generico" = "Generico";
+"Graphtec (iMark)" = "Graphtec (iMark)";
+"Profilo" = "Profilo";
+"Segni: misura" = "Segni: misura";
+"Segni: dal bordo" = "Segni: dal bordo";
+"Graphtec con iMark: Crocini non disegna i segni di registrazione. Il PDF «fustella» ha solo la linea di taglio, su un livello «CutContour»: aprilo in Illustrator e fai aggiungere i segni ad iMark. Tieni almeno 6 mm di margine dal bordo del foglio." = "Graphtec con iMark: Crocini non disegna i segni di registrazione. Il PDF «fustella» ha solo la linea di taglio, su un livello «CutContour»: aprilo in Illustrator e fai aggiungere i segni ad iMark. Tieni almeno 6 mm di margine dal bordo del foglio.";

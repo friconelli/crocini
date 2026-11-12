@@ -15,7 +15,7 @@ struct PreviewView: View {
         GeometryReader { geo in
             ZStack {
                 PreviewCanvas(progress: progress, zoom: viewport.zoom, offset: viewport.offset,
-                              s: s, r: r, artwork: showBack ? store.backArtwork : store.artwork, back: showBack, registration: store.plotter,
+                              s: s, r: r, artwork: showBack ? store.backArtwork : store.artwork, back: showBack, registration: store.plotter && store.plotterProfile.drawsMarks ? store.registrationStyle : nil,
                               shape: store.plotter ? store.cutShape : nil,
                               numbering: store.numbering.appliesTo(back: showBack, duplex: store.duplex) ? store.numbering : nil)
                 if r.count == 0 { EmptyHint() }
@@ -96,7 +96,7 @@ private struct PreviewCanvas: View, Animatable {
     let r: LayoutResult
     let artwork: NSImage?
     var back = false
-    var registration = false
+    var registration: RegistrationStyle?
     var shape: CutShape?
     var numbering: Numbering?
 
@@ -181,8 +181,8 @@ private struct PreviewCanvas: View, Animatable {
             marks.move(to: CGPoint(x: seg.x1 * scale, y: seg.y1 * scale))
             marks.addLine(to: CGPoint(x: seg.x2 * scale, y: seg.y2 * scale))
         }
-        if registration {
-            for m in LayoutEngine.registrationMarks(s) {
+        if let registration {
+            for m in LayoutEngine.registrationMarks(s, style: registration) {
                 ctx.fill(Path(CGRect(x: m.minX * scale, y: m.minY * scale, width: m.width * scale, height: m.height * scale)), with: .color(.black))
             }
         }

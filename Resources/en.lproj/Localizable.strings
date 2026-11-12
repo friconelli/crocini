@@ -162,3 +162,9 @@
 "Non trovo nessun tracciato in «%@». Serve un SVG con forme vettoriali (tracciati, rettangoli, cerchi, poligoni)." = "I can't find any path in “%@”. It needs an SVG with vector shapes (paths, rectangles, circles, polygons).";
 "Forma: %@ × %@ mm. Viene adattata alla misura dell'elemento." = "Shape: %@ × %@ mm. It is fitted to the item size.";
 "Primo numero: %@, ultimo: %@. La posizione è dall'angolo in alto a sinistra dell'elemento, a rifilo; il numero resta in anteprima e nel PDF. Con più fogli il PDF ha una pagina per foglio." = "First number: %@, last: %@. The position is from the item's top-left corner, at the trim; the number shows in the preview and in the PDF. With more sheets the PDF has one page per sheet.";
+"Generico" = "Generic";
+"Graphtec (iMark)" = "Graphtec (iMark)";
+"Profilo" = "Profile";
+"Segni: misura" = "Marks: size";
+"Segni: dal bordo" = "Marks: from edge";
+"Graphtec con iMark: Crocini non disegna i segni di registrazione. Il PDF «fustella» ha solo la linea di taglio, su un livello «CutContour»: aprilo in Illustrator e fai aggiungere i segni ad iMark. Tieni almeno 6 mm di margine dal bordo del foglio." = "Graphtec with iMark: Crocini does not draw registration marks. The “fustella” PDF has only the cut line, on a “CutContour” layer: open it in Illustrator and let iMark add the marks. Keep at least 6 mm of margin from the sheet edge.";

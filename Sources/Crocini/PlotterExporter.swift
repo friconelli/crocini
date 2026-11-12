@@ -7,7 +7,7 @@ import CoreGraphics
 enum PlotterExporter {
     static let k = 72.0 / 25.4
 
-    static func export(settings s: LayoutSettings, result r: LayoutResult, cornerRadius: Double, shape: CutShape? = nil, to url: URL) -> Bool {
+    static func export(settings s: LayoutSettings, result r: LayoutResult, cornerRadius: Double, shape: CutShape? = nil, registration: RegistrationStyle? = RegistrationStyle(), to url: URL) -> Bool {
         guard r.count > 0 else { return false }
         let H = s.pageHeight
         func f(_ v: Double) -> String { String(format: "%.3f", v) }
@@ -15,8 +15,8 @@ enum PlotterExporter {
         func Y(_ y: Double) -> String { f((H - y) * k) }
 
         var c = ""
-        // Linea di taglio (colore spot CutContour, 0,25 pt)
-        c += "/CS1 CS 1 SCN 0.25 w 1 J 1 j\n"
+        // Linea di taglio (colore spot CutContour, 0,25 pt), su un livello a parte «CutContour» (Illustrator lo apre come livello)
+        c += "/OC /OC1 BDC\n/CS1 CS 1 SCN 0.25 w 1 J 1 j\n"
         let radius = max(0, cornerRadius)
         if let shape {
             // Forma personalizzata: una per elemento, adattata al suo rettangolo (e girata se gli elementi sono ruotati)
@@ -57,19 +57,23 @@ enum PlotterExporter {
                 }
             }
         }
-        // Segni di registrazione: quadrati neri (K 100%), identici a quelli del PDF di stampa
-        c += "0 0 0 1 k\n"
-        for m in LayoutEngine.registrationMarks(s) {
-            c += "\(X(m.minX)) \(Y(m.maxY)) \(f(m.width * k)) \(f(m.height * k)) re f\n"
+        c += "EMC\n"
+        if let registration {
+            // Segni di registrazione: quadrati neri (K 100%), identici a quelli del PDF di stampa
+            c += "0 0 0 1 k\n"
+            for m in LayoutEngine.registrationMarks(s, style: registration) {
+                c += "\(X(m.minX)) \(Y(m.maxY)) \(f(m.width * k)) \(f(m.height * k)) re f\n"
+            }
         }
 
         let objects = [
-            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Catalog /Pages 2 0 R /OCProperties << /OCGs [7 0 R] /D << /Order [7 0 R] /ON [7 0 R] >> >> >>",
             "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 \(f(s.pageWidth * k)) \(f(H * k))] /Resources << /ColorSpace << /CS1 5 0 R >> >> /Contents 4 0 R >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 \(f(s.pageWidth * k)) \(f(H * k))] /Resources << /ColorSpace << /CS1 5 0 R >> /Properties << /OC1 7 0 R >> >> /Contents 4 0 R >>",
             "<< /Length \(c.utf8.count) >>\nstream\n\(c)endstream",
             "[/Separation /CutContour /DeviceCMYK 6 0 R]",
             "<< /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [0 1 0 0] /N 1 >>",
+            "<< /Type /OCG /Name (CutContour) >>",
         ]
         var data = Data("%PDF-1.4\n".utf8)
         var offsets: [Int] = []
