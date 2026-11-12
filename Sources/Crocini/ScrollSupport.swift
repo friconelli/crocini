@@ -13,6 +13,7 @@ final class StylerView: NSView {
     private var monitor: Any?
     private var timer: Timer?
     private var current = 0.0, target = 0.0
+    private var lastTick = CACurrentMediaTime()
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -28,12 +29,14 @@ final class StylerView: NSView {
         guard window != nil, scrollView == nil, let sv = enclosingScrollView else { return }
         scrollView = sv
         sv.hasVerticalScroller = true
+        // barra sempre visibile quando c'è da scorrere (si nasconde solo se il contenuto sta tutto), in una colonna sua:
+        // non si appoggia al contenuto e non dipende dall'impostazione «barre di scorrimento» del sistema
         sv.autohidesScrollers = true
-        // solo per le prove: --show-scrollbar tiene la barra sempre visibile
-        sv.scrollerStyle = CommandLine.arguments.contains("--show-scrollbar") ? .legacy : .overlay
+        sv.scrollerStyle = .legacy
         sv.verticalScroller = ColorScroller()
-        sv.scrollerInsets = NSEdgeInsets(top: 4, left: 0, bottom: 4, right: 2)
-        sv.flashScrollers()
+        sv.scrollerInsets = NSEdgeInsets(top: 4, left: 0, bottom: 4, right: 3)
+        sv.verticalScrollElasticity = .none   // niente rimbalzo ai bordi: era la causa dei sobbalzi
+        sv.horizontalScrollElasticity = .none
         monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] e in self?.handle(e) ?? e }
     }
 
@@ -48,20 +51,30 @@ final class StylerView: NSView {
         let delta = e.scrollingDeltaY * 28 * (doc.isFlipped ? -1 : 1)
         target = min(max(target + delta, 0), maxY)
         if timer == nil {
-            timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120, repeats: true) { [weak self] _ in self?.tick() }
+            lastTick = CACurrentMediaTime()
+            let t = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] _ in self?.tick() }
+            RunLoop.main.add(t, forMode: .common)   // anche mentre si trascina qualcos'altro
+            timer = t
         }
         return nil
     }
 
     private func tick() {
         guard let sv = scrollView else { stopTimer(); return }
+        // si riparte dalla posizione reale se qualcosa l'ha spostata (animazioni, ridimensionamenti)
+        let doc = sv.documentView
+        let maxY = max(0, (doc?.frame.height ?? 0) - sv.contentView.bounds.height)
+        target = min(max(target, 0), maxY)
+        let now = CACurrentMediaTime(), dt = min(0.05, now - lastTick)
+        lastTick = now
         let diff = target - current
-        if abs(diff) < 0.3 { current = target; apply(sv); stopTimer(); return }
-        current += diff * 0.16
-        apply(sv)
+        if abs(diff) < 0.4 { current = target; apply(sv, maxY); stopTimer(); return }
+        current += diff * (1 - exp(-dt * 11))   // smorzamento indipendente dalla frequenza dei fotogrammi
+        apply(sv, maxY)
     }
 
-    private func apply(_ sv: NSScrollView) {
+    private func apply(_ sv: NSScrollView, _ maxY: Double) {
+        current = min(max(current, 0), maxY)
         sv.contentView.scroll(to: NSPoint(x: sv.contentView.bounds.origin.x, y: current))
         sv.reflectScrolledClipView(sv.contentView)
     }
@@ -74,7 +87,11 @@ final class ColorScroller: NSScroller {
     override class var isCompatibleWithOverlayScrollers: Bool { true }
 
     override func drawKnobSlot(in slotRect: NSRect, highlight flag: Bool) {
-        // nessuna guida: solo la pillola
+        // guida appena accennata, così si capisce sempre che la sidebar scorre
+        let w: CGFloat = 6
+        let r = NSRect(x: slotRect.midX - w / 2, y: slotRect.minY + 1, width: w, height: max(w, slotRect.height - 2))
+        NSColor.labelColor.withAlphaComponent(0.10).setFill()
+        NSBezierPath(roundedRect: r, xRadius: w / 2, yRadius: w / 2).fill()
     }
 
     override func drawKnob() {
